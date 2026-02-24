@@ -109,7 +109,11 @@
                                     <th class="px-6 py-3 font-semibold">{{ __('Full Name') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Age') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Sex') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Extension') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('OSCA ID') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Birthdate') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Barangay') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Pension Type') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Contact') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Actions') }}</th>
                                 </tr>
@@ -120,7 +124,11 @@
                                         <td class="px-6 py-4 font-medium">{{ $citizen->getFormattedDisplayName() }}</td>
                                         <td class="px-6 py-4">{{ $citizen->age }}</td>
                                         <td class="px-6 py-4">{{ $citizen->sex }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->extension_name ?? 'N/A' }}</td>
                                         <td class="px-6 py-4">{{ $citizen->osca_id }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->date_of_birth ? $citizen->date_of_birth->format('M d, Y') : 'N/A' }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->barangay ?? 'N/A' }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->pension_type ? ucfirst(str_replace('_', ' ', $citizen->pension_type)) : 'N/A' }}</td>
                                         <td class="px-6 py-4">{{ $citizen->contact_number ?? 'N/A' }}</td>
                                         <td class="px-6 py-4 flex gap-2">
                                             <a href="{{ route('senior-citizens.show', $citizen) }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ __('View') }}</a>

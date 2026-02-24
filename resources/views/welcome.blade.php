@@ -297,34 +297,34 @@
 
                         <!-- Features Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="p-6 bg-white dark:bg-[#1a1a19] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg">
-                                <div class="text-3xl mb-3">📋</div>
-                                <h3 class="font-semibold text-lg mb-2">Complete Records</h3>
-                                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Maintain comprehensive information about senior citizens with organized, accessible data.</p>
+                            <div class="p-8 bg-white dark:bg-[#1a1a19] rounded-2xl shadow-sm hover:shadow-md dark:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+                                <div class="text-4xl mb-4">📋</div>
+                                <h3 class="font-semibold text-lg mb-3 text-[#1b1b18] dark:text-[#EDEDEC]">Complete Records</h3>
+                                <p class="text-sm leading-relaxed text-[#706f6c] dark:text-[#A1A09A]">Maintain comprehensive information about senior citizens with organized, accessible data.</p>
                             </div>
 
-                            <div class="p-6 bg-white dark:bg-[#1a1a19] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg">
-                                <div class="text-3xl mb-3">📊</div>
-                                <h3 class="font-semibold text-lg mb-2">Analytics & Reports</h3>
-                                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Generate detailed reports and view statistics to make informed decisions.</p>
+                            <div class="p-8 bg-white dark:bg-[#1a1a19] rounded-2xl shadow-sm hover:shadow-md dark:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+                                <div class="text-4xl mb-4">📊</div>
+                                <h3 class="font-semibold text-lg mb-3 text-[#1b1b18] dark:text-[#EDEDEC]">Analytics & Reports</h3>
+                                <p class="text-sm leading-relaxed text-[#706f6c] dark:text-[#A1A09A]">Generate detailed reports and view statistics to make informed decisions.</p>
                             </div>
 
-                            <div class="p-6 bg-white dark:bg-[#1a1a19] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg">
-                                <div class="text-3xl mb-3">🔒</div>
-                                <h3 class="font-semibold text-lg mb-2">Secure Access</h3>
-                                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">Role-based access control ensures data security and proper user management.</p>
+                            <div class="p-8 bg-white dark:bg-[#1a1a19] rounded-2xl shadow-sm hover:shadow-md dark:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+                                <div class="text-4xl mb-4">🔒</div>
+                                <h3 class="font-semibold text-lg mb-3 text-[#1b1b18] dark:text-[#EDEDEC]">Secure Access</h3>
+                                <p class="text-sm leading-relaxed text-[#706f6c] dark:text-[#A1A09A]">Role-based access control ensures data security and proper user management.</p>
                             </div>
                         </div>
 
                         <!-- Authentication Section -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
                             <!-- Login Card -->
-                            <div class="p-8 bg-white dark:bg-[#1a1a19] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-lg">
-                                <h3 class="text-2xl font-bold mb-4">Existing Users</h3>
-                                <p class="text-[#706f6c] dark:text-[#A1A09A] mb-6">Access your account to view and manage senior citizen records.</p>
+                            <div class="p-10 bg-white dark:bg-[#1a1a19] rounded-2xl shadow-sm hover:shadow-md dark:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+                                <h3 class="text-2xl font-bold mb-3 text-[#1b1b18] dark:text-[#EDEDEC]">Existing Users</h3>
+                                <p class="text-[#706f6c] dark:text-[#A1A09A] mb-8 leading-relaxed">Access your account to view and manage senior citizen records.</p>
                                 <a
                                     href="{{ route('login') }}"
-                                    class="inline-block w-full text-center px-6 py-3 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] rounded-lg font-semibold hover:bg-black dark:hover:bg-gray-100 transition"
+                                    class="inline-block w-full text-center px-6 py-3 bg-[#1b1b18] dark:bg-white text-white dark:text-[#1b1b18] rounded-xl font-semibold hover:bg-[#2d2d2a] dark:hover:bg-gray-100 transition-colors duration-200"
                                 >
                                     Sign In
                                 </a>
@@ -332,12 +332,12 @@
 
                             <!-- Register Card -->
                             @if (Route::has('register'))
-                                <div class="p-8 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                    <h3 class="text-2xl font-bold mb-4 text-blue-900 dark:text-blue-100">New to OSCAS?</h3>
-                                    <p class="text-blue-800 dark:text-blue-200 mb-6">Create an account to join our system and help manage senior citizen information.</p>
+                                <div class="p-10 bg-blue-50 dark:bg-[#0d1b33] rounded-2xl shadow-sm hover:shadow-md dark:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+                                    <h3 class="text-2xl font-bold mb-3 text-blue-900 dark:text-blue-100">New to OSCAS?</h3>
+                                    <p class="text-blue-800 dark:text-blue-300 mb-8 leading-relaxed">Create an account to join our system and help manage senior citizen information.</p>
                                     <a
                                         href="{{ route('register') }}"
-                                        class="inline-block w-full text-center px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition"
+                                        class="inline-block w-full text-center px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200"
                                     >
                                         Create Account
                                     </a>
