@@ -19,8 +19,8 @@ class ReportController extends Controller
         $gsisCount = SeniorCitizen::where('gsis', true)->count();
         $pvaoCount = SeniorCitizen::where('pvao', true)->count();
 
-        $maleCount = SeniorCitizen::where('sex', 'Male')->count();
-        $femaleCount = SeniorCitizen::where('sex', 'Female')->count();
+    $maleCount = SeniorCitizen::where('sex', 'Male')->count();
+    $femaleCount = SeniorCitizen::where('sex', 'Female')->count();
 
         return view('reports.index', compact(
             'totalSeniorCitizens',
@@ -41,9 +41,9 @@ class ReportController extends Controller
     {
         $query = SeniorCitizen::query();
 
-        if ($request->filled('sex')) {
-            $query->where('sex', $request->sex);
-        }
+    if ($request->filled('sex')) {
+        $query->where('sex', $request->sex);
+    }
 
         if ($request->filled('status')) {
             if ($request->status === 'waitlist') {
@@ -126,17 +126,17 @@ class ReportController extends Controller
             'brgy_official' => SeniorCitizen::where('brgy_official', true)->count(),
         ];
 
-        $sexStats = [
-            'male' => SeniorCitizen::where('sex', 'Male')->count(),
-            'female' => SeniorCitizen::where('sex', 'Female')->count(),
-            'other' => SeniorCitizen::where('sex', 'Other')->count(),
-        ];
+    $sexStats = [
+        'male' => SeniorCitizen::where('sex', 'Male')->count(),
+        'female' => SeniorCitizen::where('sex', 'Female')->count(),
+        'other' => SeniorCitizen::where('sex', 'Other')->count(),
+    ];
 
-        $statusStats = [
+    $statusStats = [
             'waitlist' => SeniorCitizen::where('waitlist', true)->count(),
             'social_pension' => SeniorCitizen::where('social_pension', true)->count(),
         ];
 
-        return view('reports.statistics', compact('pensionStats', 'sexStats', 'statusStats'));
+    return view('reports.statistics', compact('pensionStats', 'sexStats', 'statusStats'));
     }
 }

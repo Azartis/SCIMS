@@ -28,10 +28,10 @@ class SeniorCitizenController extends Controller
             });
         }
 
-        // Filter by sex
-        if ($request->filled('sex') && $request->sex !== '') {
-            $query->where('sex', $request->sex);
-        }
+    // Filter by sex
+    if ($request->filled('sex') && $request->sex !== '') {
+        $query->where('sex', $request->sex);
+    }
 
         // Filter by barangay
         if ($request->filled('barangay') && $request->barangay !== '') {
