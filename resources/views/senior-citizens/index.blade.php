@@ -122,7 +122,7 @@
                                 @foreach ($seniorCitizens as $citizen)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 font-medium">{{ $citizen->getFormattedDisplayName() }}</td>
-                                        <td class="px-6 py-4">{{ $citizen->age }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->exact_age }}</td>
                                         <td class="px-6 py-4">{{ $citizen->sex }}</td>
                                         <td class="px-6 py-4">{{ $citizen->extension_name ?? 'N/A' }}</td>
                                         <td class="px-6 py-4">{{ $citizen->osca_id }}</td>

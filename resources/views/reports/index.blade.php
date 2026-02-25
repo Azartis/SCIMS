@@ -73,6 +73,24 @@
                 </div>
             </div>
 
+            <!-- Categorized Report Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <a href="{{ route('reports.health') }}" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 hover:border-blue-500 border border-transparent">
+                    <h3 class="text-lg font-semibold mb-2">{{ __('Health Conditions') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">View records by health condition (disability, bedridden, assistive devices, critical illness).</p>
+                </a>
+
+                <a href="{{ route('reports.barangay') }}" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 hover:border-blue-500 border border-transparent">
+                    <h3 class="text-lg font-semibold mb-2">{{ __('By Barangay') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">See senior citizens grouped by barangay and drill into each barangay.</p>
+                </a>
+
+                <a href="{{ route('reports.deceased') }}" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 hover:border-red-500 border border-transparent">
+                    <h3 class="text-lg font-semibold mb-2">{{ __('Deceased / Archived') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">View archived or marked-as-deceased records (soft-deleted).</p>
+                </a>
+            </div>
+
             <!-- Export and View Options -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">{{ __('Export Options') }}</h3>

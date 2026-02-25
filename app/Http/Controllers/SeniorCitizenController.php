@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SeniorCitizen;
 use App\Models\FamilyMember;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 
 class SeniorCitizenController extends Controller
@@ -379,6 +380,28 @@ class SeniorCitizenController extends Controller
 
         return redirect()->route('senior-citizens.index')
                         ->with('success', 'Senior citizen archived successfully! View archived records in the Archive section.');
+    }
+
+    /**
+     * Display global change history for all senior citizens
+     */
+    public function history()
+    {
+        $auditLogs = AuditLog::where('auditable_type', SeniorCitizen::class)
+            ->with('user', 'auditable')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('history', compact('auditLogs'));
+    }
+
+    /**
+     * Display audit history for a senior citizen
+     */
+    public function auditHistory(SeniorCitizen $seniorCitizen)
+    {
+        $auditLogs = $seniorCitizen->auditLogs();
+        return view('senior-citizens.audit-history', compact('seniorCitizen', 'auditLogs'));
     }
 }
 

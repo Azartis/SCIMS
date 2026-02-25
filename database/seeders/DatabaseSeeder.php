@@ -17,9 +17,19 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
+        // ensure test user exists (avoid duplicates on repeated seeding)
+        User::firstOrCreate([
             'email' => 'test@example.com',
+        ], [
+            'name' => 'Test User',
+            'password' => bcrypt('password'),
         ]);
+
+        // optionally wipe existing seniors so repeated seeding is idempotent
+        // deleting triggers cascade on family_members
+        \App\Models\SeniorCitizen::query()->delete();
+
+        // generate a bunch of senior citizens for testing
+        \App\Models\SeniorCitizen::factory()->count(500)->create();
     }
 }
