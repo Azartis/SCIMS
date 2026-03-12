@@ -24,9 +24,45 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // attempt authentication first
+        $request->authenticate();
+
+        // after login, ensure admin users cannot use the regular form
+        if (auth()->user()->role === 'admin') {
+            // immediately log them back out
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect('/')->withErrors([
+                'email' => 'Admin accounts must use the dedicated admin login.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Handle admin login request with role validation.
+     */
+    public function adminStore(LoginRequest $request): RedirectResponse
+    {
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // Check if user has admin role
+        if (auth()->user()->role !== 'admin') {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect('/')->withErrors([
+                'email' => 'Access denied. Admin privileges required.',
+            ]);
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

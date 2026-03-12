@@ -72,6 +72,7 @@
                                     <th class="px-6 py-3 font-semibold">{{ __('Model') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Record ID') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('IP Address') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Details') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
@@ -100,6 +101,18 @@
                                         <td class="px-6 py-4">{{ class_basename($log->auditable_type) }}</td>
                                         <td class="px-6 py-4 font-mono text-gray-600 dark:text-gray-400">#{{ $log->auditable_id }}</td>
                                         <td class="px-6 py-4 font-mono text-sm">{{ $log->ip_address }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                            @if($log->event === 'updated' && $log->old_values && $log->new_values)
+                                                @php
+                                                    $changed = array_keys(array_diff_assoc($log->new_values, $log->old_values));
+                                                @endphp
+                                                {{ implode(', ', $changed) ?: __('(no changed fields)') }}
+                                            @elseif($log->event === 'created')
+                                                {{ __('Created record') }}
+                                            @elseif($log->event === 'deleted')
+                                                {{ __('Deleted record') }}
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4">
                                             <a href="{{ route('audit-logs.show', $log) }}" class="text-blue-600 dark:text-blue-400 hover:underline">
                                                 {{ __('View') }}

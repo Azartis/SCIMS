@@ -18,32 +18,24 @@
                 </div>
             @endif
 
-            <!-- Search Bar -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
-                <form method="GET" action="{{ route('senior-citizens.archive') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Search -->
-                        <div>
-                            <input 
-                                type="text" 
-                                name="search" 
-                                placeholder="Search by name or OSCA ID..." 
-                                value="{{ request('search') }}"
-                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-100 uppercase tracking-widest hover:bg-blue-700">
-                            {{ __('Search') }}
-                        </button>
-                        <a href="{{ route('senior-citizens.archive') }}" class="inline-flex items-center px-4 py-2 bg-gray-300 dark:bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-gray-900 dark:text-gray-100 uppercase tracking-widest hover:bg-gray-400">
-                            {{ __('Reset') }}
-                        </a>
-                    </div>
-                </form>
-            </div>
+            <x-filter-bar
+                :action="route('senior-citizens.archive')"
+                :resetUrl="route('senior-citizens.archive')"
+                :hasActiveFilters="request()->filled('search') || request()->filled('age_range') || request()->filled('age_exact') || (request('sort') && request('sort') !== 'name_asc')"
+                :activeCount="(request()->filled('search') ? 1 : 0) + (request()->filled('age_range') || request()->filled('age_exact') ? 1 : 0) + (request('sort') && request('sort') !== 'name_asc' ? 1 : 0)"
+            >
+                <div class="sm:col-span-2 md:col-span-2">
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Search</label>
+                    <input type="text" name="search" placeholder="Name or OSCA ID" value="{{ request('search') }}"
+                        class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <x-age-range-filter name="age_range" :value="request('age_range')" />
+                </div>
+                <div>
+                    <x-sort-dropdown :options="['name_asc' => 'Name A → Z', 'name_desc' => 'Name Z → A']" />
+                </div>
+            </x-filter-bar>
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 @if ($archivedCitizens->isEmpty())
@@ -60,6 +52,9 @@
                                     <th class="px-6 py-3 font-semibold">{{ __('Sex') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('OSCA ID') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Barangay') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Date of Death') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Cause') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Cert #') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Archived Date') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Actions') }}</th>
                                 </tr>
@@ -68,10 +63,13 @@
                                 @foreach ($archivedCitizens as $citizen)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 font-medium">{{ $citizen->getFormattedDisplayName() }}</td>
-                                        <td class="px-6 py-4">{{ $citizen->exact_age }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->age }}</td>
                                         <td class="px-6 py-4">{{ $citizen->sex }}</td>
                                         <td class="px-6 py-4">{{ $citizen->osca_id }}</td>
                                         <td class="px-6 py-4">{{ $citizen->barangay }}</td>
+                                        <td class="px-6 py-4">{{ optional($citizen->date_of_death)->format('M d, Y') }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->cause_of_death ?? 'N/A' }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->death_certificate_number ?? 'N/A' }}</td>
                                         <td class="px-6 py-4">{{ $citizen->deleted_at->format('M d, Y H:i') }}</td>
                                         <td class="px-6 py-4 flex gap-2">
                                             <form action="{{ route('senior-citizens.restore', $citizen->id) }}" method="POST" style="display: inline;">

@@ -63,36 +63,40 @@ class ReportController extends Controller
             function () use ($seniorCitizens) {
                 $handle = fopen('php://output', 'w');
 
-                // Add headers
+                // Add headers following requested layout
                 fputcsv($handle, [
-                    'ID',
-                    'Full Name',
-                    'Date of Birth',
-                    'Age',
-                    'Sex',
-                    'Address',
-                    'Contact Number',
+                    'LAST NAME',
+                    'FIRST NAME',
+                    'MIDDLE NAME',
+                    'ADDRESS',
+                    'DATE OF BIRTH (MM-DD-YYYY)',
+                    'AGE',
+                    'SEX',
+                    'DATE OF ISSUANCE (MM-DD)',
                     'OSCA ID',
                     'SSS',
                     'GSIS',
                     'PVAO',
-                    'Family Pension',
-                    'Brgy Official',
-                    'Waitlist',
-                    'Social Pension',
-                    'Remarks'
+                    'FAMILY PENSION',
+                    'BRGY OFFICIAL',
+                    'WAITLIST',
+                    'SC SOCIAL',
+                    'REMARKS'
                 ]);
 
                 // Add data
                 foreach ($seniorCitizens as $citizen) {
                     fputcsv($handle, [
-                        $citizen->id,
-                        $citizen->getFormattedDisplayName(),
-                        $citizen->date_of_birth,
-                        $citizen->exact_age,
-                        $citizen->sex,
+                            // name fields separated
+                        $citizen->lastname,
+                        $citizen->firstname,
+                        $citizen->middlename,
                         $citizen->address,
-                        $citizen->contact_number,
+                        // format DOB as mm-dd-yyyy for spreadsheet age formulas
+                        $citizen->date_of_birth ? "'" . $citizen->date_of_birth->format('m-d-Y') : '',
+                        $citizen->age,
+                        $citizen->sex,
+                        $citizen->issuance_date,
                         $citizen->osca_id,
                         $citizen->sss ? 'Yes' : 'No',
                         $citizen->gsis ? 'Yes' : 'No',
@@ -189,19 +193,24 @@ class ReportController extends Controller
                 $query->where('philhealth_id', 'like', "%{$request->philhealth_id}%");
             }
 
-            // Filter by age range
-            if ($request->filled('age_range')) {
-                match ($request->age_range) {
-                    '60-69' => $query->whereRaw('age >= 60 AND age < 70'),
-                    '70-79' => $query->whereRaw('age >= 70 AND age < 80'),
-                    '80+' => $query->where('age', '>=', 80),
-                    default => null,
-                };
+            $this->applyAgeFilter($query, $request);
+
+            // Filter by search (name or OSCA ID)
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%")
+                      ->orWhere('middlename', 'like', "%{$search}%")
+                      ->orWhere('lastname', 'like', "%{$search}%")
+                      ->orWhere('fullname', 'like', "%{$search}%")
+                      ->orWhere('osca_id', 'like', "%{$search}%");
+                });
             }
 
             // Sort by name
-            $sort = $request->query('sort', 'asc');
-            $query->orderBy('lastname', $sort)->orderBy('firstname', $sort);
+            $sort = $request->query('sort', 'name_asc');
+            $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
+            $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
 
             $seniorCitizens = $query->paginate(10)->appends($request->query());
         }
@@ -223,7 +232,32 @@ class ReportController extends Controller
         $selected = $request->query('barangay');
         $seniorCitizens = null;
         if ($selected && in_array($selected, $barangays)) {
-            $seniorCitizens = SeniorCitizen::where('barangay', $selected)->paginate(10)->appends($request->query());
+            $query = SeniorCitizen::where('barangay', $selected);
+
+            // Filter by sex
+            if ($request->filled('sex')) {
+                $query->where('sex', $request->sex);
+            }
+
+            $this->applyAgeFilter($query, $request);
+
+            // Filter by search (name or OSCA ID)
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%")
+                      ->orWhere('middlename', 'like', "%{$search}%")
+                      ->orWhere('lastname', 'like', "%{$search}%")
+                      ->orWhere('fullname', 'like', "%{$search}%")
+                      ->orWhere('osca_id', 'like', "%{$search}%");
+                });
+            }
+
+            $sort = $request->query('sort', 'name_asc');
+            $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
+            $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+
+            $seniorCitizens = $query->paginate(10)->appends($request->query());
         }
 
         return view('reports.barangay', compact('barangays', 'counts', 'selected', 'seniorCitizens'));
@@ -244,14 +278,7 @@ class ReportController extends Controller
             $query->where('sex', $request->sex);
         }
 
-        if ($request->filled('age_range')) {
-            match ($request->age_range) {
-                '60-69' => $query->whereRaw('age >= 60 AND age < 70'),
-                '70-79' => $query->whereRaw('age >= 70 AND age < 80'),
-                '80+' => $query->where('age', '>=', 80),
-                default => null,
-            };
-        }
+        $this->applyAgeFilter($query, $request);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -265,6 +292,10 @@ class ReportController extends Controller
             });
         }
 
+        $sort = $request->query('sort', 'name_asc');
+        $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
+        $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+
         $seniorCitizens = $query->get();
 
         $filename = 'barangay_' . ($request->filled('barangay') ? Str::slug($request->barangay) . '_' : '') . now()->format('Y-m-d_His') . '.csv';
@@ -272,40 +303,45 @@ class ReportController extends Controller
         return response()->stream(function () use ($seniorCitizens) {
             $handle = fopen('php://output', 'w');
 
+            // match same format as main export but include Barangay column
             fputcsv($handle, [
-                'ID',
-                'Full Name',
-                'Date of Birth',
-                'Age',
-                'Sex',
-                'Barangay',
-                'Address',
-                'Contact Number',
+                'LAST NAME',
+                'FIRST NAME',
+                'MIDDLE NAME',
+                'BARANGAY',
+                'ADDRESS',
+                'DATE OF BIRTH (MM-DD-YYYY)',
+                'AGE',
+                'SEX',
+                'DATE OF ISSUANCE (MM-DD)',
                 'OSCA ID',
                 'SSS',
                 'GSIS',
                 'PVAO',
-                'Family Pension',
-                'Waitlist',
-                'Social Pension',
-                'Remarks'
+                'FAMILY PENSION',
+                'BRGY OFFICIAL',
+                'WAITLIST',
+                'SC SOCIAL',
+                'REMARKS',
             ]);
 
             foreach ($seniorCitizens as $citizen) {
                 fputcsv($handle, [
-                    $citizen->id,
-                    $citizen->getFormattedDisplayName(),
-                    $citizen->date_of_birth,
-                    $citizen->exact_age,
-                    $citizen->sex,
+                    $citizen->lastname,
+                    $citizen->firstname,
+                    $citizen->middlename,
                     $citizen->barangay,
                     $citizen->address,
-                    $citizen->contact_number,
+                    $citizen->date_of_birth ? "'" . $citizen->date_of_birth->format('m-d-Y') : '',
+                    $citizen->age,
+                    $citizen->sex,
+                    $citizen->issuance_date,
                     $citizen->osca_id,
                     $citizen->sss ? 'Yes' : 'No',
                     $citizen->gsis ? 'Yes' : 'No',
                     $citizen->pvao ? 'Yes' : 'No',
                     $citizen->family_pension ? 'Yes' : 'No',
+                    $citizen->brgy_official ? 'Yes' : 'No',
                     $citizen->waitlist ? 'Yes' : 'No',
                     $citizen->social_pension ? 'Yes' : 'No',
                     $citizen->remarks
@@ -361,14 +397,7 @@ class ReportController extends Controller
             $query->where('philhealth_id', 'like', "%{$request->philhealth_id}%");
         }
 
-        if ($request->filled('age_range')) {
-            match ($request->age_range) {
-                '60-69' => $query->whereRaw('age >= 60 AND age < 70'),
-                '70-79' => $query->whereRaw('age >= 70 AND age < 80'),
-                '80+' => $query->where('age', '>=', 80),
-                default => null,
-            };
-        }
+        $this->applyAgeFilter($query, $request);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -382,23 +411,29 @@ class ReportController extends Controller
             });
         }
 
+        $sort = $request->query('sort', 'name_asc');
+        $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
+        $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+
         $seniorCitizens = $query->get();
 
         $filename = 'health_' . Str::slug($condition) . '_' . now()->format('Y-m-d_His') . '.csv';
 
-        return response()->stream(function () use ($seniorCitizens) {
+        // closure needs the condition variable as well
+        return response()->stream(function () use ($seniorCitizens, $condition) {
             $handle = fopen('php://output', 'w');
 
             // build headers array and include any extra column for the specific condition
             $headers = [
-                'ID',
-                'Full Name',
-                'Date of Birth',
-                'Age',
-                'Sex',
-                'Barangay',
-                'Address',
-                'Contact Number',
+                'LAST NAME',
+                'FIRST NAME',
+                'MIDDLE NAME',
+                'BARANGAY',
+                'ADDRESS',
+                'DATE OF BIRTH (MM-DD-YYYY)',
+                'AGE',
+                'SEX',
+                'DATE OF ISSUANCE (MM-DD)',
                 'OSCA ID',
             ];
 
@@ -418,7 +453,7 @@ class ReportController extends Controller
                 'PVAO',
                 'Family Pension',
                 'Waitlist',
-                'Social Pension',
+                'SC SOCIAL',
                 'Remarks',
             ]);
 
@@ -427,14 +462,15 @@ class ReportController extends Controller
             foreach ($seniorCitizens as $citizen) {
                 // base row data
                 $row = [
-                    $citizen->id,
-                    $citizen->getFormattedDisplayName(),
-                    $citizen->date_of_birth,
-                    $citizen->exact_age,
-                    $citizen->sex,
+                    $citizen->lastname,
+                    $citizen->firstname,
+                    $citizen->middlename,
                     $citizen->barangay,
                     $citizen->address,
-                    $citizen->contact_number,
+                    $citizen->date_of_birth ? "'" . $citizen->date_of_birth->format('m-d-Y') : '',
+                    $citizen->age,
+                    $citizen->sex,
+                    $citizen->issuance_date,
                     $citizen->osca_id,
                 ];
 
@@ -487,25 +523,11 @@ class ReportController extends Controller
             $query->where('sex', $request->sex);
         }
 
-        // Filter by age range
-        if ($request->filled('age_range') && $request->age_range !== '') {
-            $ageRange = $request->age_range;
-            if ($ageRange === '60-69') {
-                $query->where('age_range', '60-69');
-            } elseif ($ageRange === '70-79') {
-                $query->where('age_range', '70-79');
-            } elseif ($ageRange === '80+') {
-                $query->where('age_range', '80+');
-            }
-        }
+        $this->applyAgeFilter($query, $request);
 
-        // Sort by name
-        $sort = $request->query('sort', 'asc');
-        if ($sort === 'desc') {
-            $query->orderBy('lastname', 'desc')->orderBy('firstname', 'desc');
-        } else {
-            $query->orderBy('lastname', 'asc')->orderBy('firstname', 'asc');
-        }
+        $sort = $request->query('sort', 'name_asc');
+        $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
+        $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
 
         $deceasedCount = SeniorCitizen::onlyTrashed()->count();
         $seniorCitizens = $query->paginate(10)->appends($request->query());
@@ -521,5 +543,19 @@ class ReportController extends Controller
     {
         $seniorCitizen = SeniorCitizen::withTrashed()->findOrFail($id);
         return view('senior-citizens.show', compact('seniorCitizen'));
+    }
+
+    private function applyAgeFilter($query, Request $request): void
+    {
+        if ($request->filled('age_exact') && is_numeric($request->age_exact)) {
+            $query->where('age', (int)$request->age_exact);
+        } elseif ($request->filled('age_range') && $request->age_range !== '') {
+            $val = $request->age_range;
+            if (preg_match('/^(\d+)-(\d+)$/', $val, $m)) {
+                $query->whereRaw('age >= ? AND age <= ?', [(int)$m[1], (int)$m[2]]);
+            } elseif ($val === '80+') {
+                $query->where('age', '>=', 80);
+            }
+        }
     }
 }

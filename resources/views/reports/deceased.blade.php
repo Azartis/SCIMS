@@ -30,19 +30,15 @@
                         <option value="">{{ __('Sex') }}</option>
                         <option value="Male" {{ request('sex') === 'Male' ? 'selected' : '' }}>{{ __('Male') }}</option>
                         <option value="Female" {{ request('sex') === 'Female' ? 'selected' : '' }}>{{ __('Female') }}</option>
-                        <option value="Other" {{ request('sex') === 'Other' ? 'selected' : '' }}>{{ __('Other') }}</option>
-                    </select>
+                        </select>
 
-                    <select name="age_range" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                        <option value="">{{ __('All Ages') }}</option>
-                        <option value="60-69" {{ request('age_range') === '60-69' ? 'selected' : '' }}>60-69</option>
-                        <option value="70-79" {{ request('age_range') === '70-79' ? 'selected' : '' }}>70-79</option>
-                        <option value="80+" {{ request('age_range') === '80+' ? 'selected' : '' }}>80+</option>
-                    </select>
+                    <div>
+                        <x-age-range-filter name="age_range" :value="request('age_range')" />
+                    </div>
 
                     <select name="sort" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                        <option value="asc" {{ request('sort') === 'asc' || !request('sort') ? 'selected' : '' }}>{{ __('A - Z') }}</option>
-                        <option value="desc" {{ request('sort') === 'desc' ? 'selected' : '' }}>{{ __('Z - A') }}</option>
+                        <option value="name_asc" {{ in_array(request('sort'), ['name_asc', 'asc', null]) ? 'selected' : '' }}>{{ __('A - Z') }}</option>
+                        <option value="name_desc" {{ request('sort') === 'name_desc' || request('sort') === 'desc' ? 'selected' : '' }}>{{ __('Z - A') }}</option>
                     </select>
 
                     <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">{{ __('Filter') }}</button>
@@ -73,7 +69,7 @@
                                 @foreach($seniorCitizens as $citizen)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 font-medium">{{ $citizen->getFormattedDisplayName() }}</td>
-                                        <td class="px-6 py-4">{{ $citizen->exact_age }}</td>
+                                        <td class="px-6 py-4">{{ $citizen->age }}</td>
                                         <td class="px-6 py-4">{{ $citizen->sex }}</td>
                                         <td class="px-6 py-4">{{ $citizen->barangay ?? 'N/A' }}</td>
                                         <td class="px-6 py-4">{{ $citizen->deleted_at ? $citizen->deleted_at->format('M d, Y') : 'N/A' }}</td>

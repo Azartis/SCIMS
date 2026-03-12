@@ -37,6 +37,8 @@ $maxWidth = [
             {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
         } else {
             document.body.classList.remove('overflow-y-hidden');
+            // notify listeners when modal is hidden
+            window.dispatchEvent(new CustomEvent('modal-closed', { detail: '{{ $name }}' }));
         }
     })"
     x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"

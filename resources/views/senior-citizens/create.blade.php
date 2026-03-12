@@ -5,409 +5,277 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-            <form action="{{ route('senior-citizens.store') }}" method="POST" id="oscaForm">
+    <div class="py-3 px-4 sm:px-0">
+        <div class="max-w-6xl mx-auto">
+            <form action="{{ route('senior-citizens.store') }}" method="POST" id="oscaForm" onsubmit="prepareFormSubmit(event)">
                 @csrf
 
-                <!-- HEADER SECTION -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6 border-b-2 border-blue-500">
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                            OFFICE OF THE SENIOR CITIZEN AFFAIRS (OSCA) INTAKE FORM
-                        </h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                            Complete all fields marked with asterisk (*) are required
-                        </p>
-                    </div>
+                <!-- Header Note -->
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-l-4 border-blue-600 p-2 rounded-lg mb-3 text-xs shadow-sm">
+                    <p class="text-gray-700 dark:text-gray-100"><span class="font-semibold">Note:</span> Fields marked <span class="text-red-600 font-bold">*</span> are required</p>
                 </div>
 
-                <!-- SECTION 1: PERSONAL / BASIC INFORMATION -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-3 border-b-2 border-blue-400">
-                            1️⃣ PERSONAL / BASIC INFORMATION
-                        </h3>
-
-                        <!-- OSCA ID Number -->
-                        <div class="mb-6">
-                            <x-input-label for="osca_id" :value="__('OSCA ID Number *')" />
-                            <x-text-input id="osca_id" class="block mt-1 w-full" type="text" name="osca_id" :value="old('osca_id')" required autofocus />
-                            <x-input-error :messages="$errors->get('osca_id')" class="mt-2" />
+                <!-- Personal Information Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-3 border-t-4 border-blue-600">
+                    <h2 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                        👤 Personal Information
+                    </h2>
+                    
+                    <!-- Name and ID Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="osca_id" :value="__('OSCA ID *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="osca_id" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="osca_id" :value="old('osca_id')" required />
+                            <x-input-error :messages="$errors->get('osca_id')" class="mt-0.5 text-xs" />
                         </div>
-
-                        <!-- Name Section (Last, First, Middle, Extension) -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div>
-                                <x-input-label for="lastname" :value="__('Last Name *')" />
-                                <x-text-input id="lastname" class="block mt-1 w-full" type="text" name="lastname" :value="old('lastname')" required />
-                                <x-input-error :messages="$errors->get('lastname')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="firstname" :value="__('First Name *')" />
-                                <x-text-input id="firstname" class="block mt-1 w-full" type="text" name="firstname" :value="old('firstname')" required />
-                                <x-input-error :messages="$errors->get('firstname')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="middlename" :value="__('Middle Name')" />
-                                <x-text-input id="middlename" class="block mt-1 w-full" type="text" name="middlename" :value="old('middlename')" />
-                                <x-input-error :messages="$errors->get('middlename')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="extension_name" :value="__('Extension (Jr., Sr., III)')" />
-                                <x-text-input id="extension_name" class="block mt-1 w-full" type="text" name="extension_name" :value="old('extension_name')" placeholder="Jr., Sr., III, IV" />
-                                <x-input-error :messages="$errors->get('extension_name')" class="mt-2" />
-                            </div>
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="national_id" :value="__('National ID *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="national_id" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="national_id" placeholder="0000-0000-0000-0000" :value="old('national_id')" required />
+                            <x-input-error :messages="$errors->get('national_id')" class="mt-0.5 text-xs" />
                         </div>
-
-                        <!-- Address -->
-                        <div class="mb-6">
-                            <x-input-label for="address" :value="__('Complete Address *')" />
-                            <textarea id="address" name="address" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500" rows="2" required>{{ old('address') }}</textarea>
-                            <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="lastname" :value="__('Last Name *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="lastname" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="lastname" :value="old('lastname')" required />
+                            <x-input-error :messages="$errors->get('lastname')" class="mt-0.5 text-xs" />
                         </div>
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="firstname" :value="__('First Name *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="firstname" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="firstname" :value="old('firstname')" required />
+                            <x-input-error :messages="$errors->get('firstname')" class="mt-0.5 text-xs" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="middlename" :value="__('Middle Name')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="middlename" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="middlename" :value="old('middlename')" />
+                            <x-input-error :messages="$errors->get('middlename')" class="mt-0.5 text-xs" />
+                        </div>
+                        <div></div>
+                    </div>
 
-                        <!-- Barangay -->
-                        <div class="mb-6">
-                            <x-input-label for="barangay" :value="__('Barangay *')" />
-                            <select id="barangay" name="barangay" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500" required>
+                    <!-- Demographics Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                            <x-input-label for="date_of_birth" :value="__('Date of Birth *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="date_of_birth" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="date" name="date_of_birth" :value="old('date_of_birth')" required onchange="computeAge()" />
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Format: YYYY-MM-DD</p>
+                            <x-input-error :messages="$errors->get('date_of_birth')" class="mt-0.5 text-xs" />
+                        </div>
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                            <x-input-label for="sex" :value="__('Sex *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <select id="sex" name="sex" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" required>
+                                <option value="">-- Select --</option>
+                                <option value="Male" @selected(old('sex')==='Male')>Male</option>
+                                <option value="Female" @selected(old('sex')==='Female')>Female</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('sex')" class="mt-0.5 text-xs" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                            <x-input-label for="civil_status" :value="__('Civil Status')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <select id="civil_status" name="civil_status" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md">
+                                <option value="">-- Select --</option>
+                                <option value="Single" @selected(old('civil_status')==='Single')>Single</option>
+                                <option value="Married" @selected(old('civil_status')==='Married')>Married</option>
+                                <option value="Widowed" @selected(old('civil_status')==='Widowed')>Widowed</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('civil_status')" class="mt-0.5 text-xs" />
+                        </div>
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                            <x-input-label for="barangay" :value="__('Barangay *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <select id="barangay" name="barangay" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" required>
                                 <option value="">-- Select Barangay --</option>
-                                @foreach(\App\Constants\Barangay::list() as $barangay)
-                                    <option value="{{ $barangay }}" @selected(old('barangay') === $barangay)>{{ $barangay }}</option>
+                                @foreach(\App\Constants\Barangay::list() as $b)
+                                    <option value="{{ $b }}" @selected(old('barangay')===$b)>{{ $b }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('barangay')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('barangay')" class="mt-0.5 text-xs" />
                         </div>
+                    </div>
 
-                        <!-- Contact Number -->
-                        <div class="mb-6">
-                            <x-input-label for="contact_number" :value="__('Contact Number')" />
-                            <x-text-input id="contact_number" class="block mt-1 w-full" type="tel" name="contact_number" :value="old('contact_number')" placeholder="09XX-XXX-XXXX" />
-                            <x-input-error :messages="$errors->get('contact_number')" class="mt-2" />
+                    <!-- Address and Contact Section -->
+                    <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-700 mb-2">
+                        <x-input-label for="address" :value="__('Municipal *')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                        <textarea id="address" name="address" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" rows="2" placeholder="Enter municipal address" required>{{ old('address') }}</textarea>
+                        <x-input-error :messages="$errors->get('address')" class="mt-0.5 text-xs" />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-700">
+                            <x-input-label for="contact_number" :value="__('Contact Number')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="contact_number" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="tel" name="contact_number" placeholder="e.g., 09XX-XXX-XXXX" :value="old('contact_number')" />
                         </div>
-
-                        <!-- Date of Birth & Place of Birth -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <x-input-label for="date_of_birth" :value="__('Date of Birth *')" />
-                                <x-text-input id="date_of_birth" class="block mt-1 w-full" type="date" name="date_of_birth" :value="old('date_of_birth')" required onchange="computeAge()" />
-                                <x-input-error :messages="$errors->get('date_of_birth')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="place_of_birth" :value="__('Place of Birth')" />
-                                <x-text-input id="place_of_birth" class="block mt-1 w-full" type="text" name="place_of_birth" :value="old('place_of_birth')" placeholder="City/Municipality, Province" />
-                                <x-input-error :messages="$errors->get('place_of_birth')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <!-- Sex & Civil Status -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <x-input-label for="sex" :value="__('Sex *')" />
-                                <select id="sex" name="sex" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    <option value="">-- Select Sex --</option>
-                                    <option value="Male" @selected(old('sex') === 'Male')>Male</option>
-                                    <option value="Female" @selected(old('sex') === 'Female')>Female</option>
-                                    <option value="Other" @selected(old('sex') === 'Other')>Other</option>
-                                </select>
-                                <x-input-error :messages="$errors->get('sex')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="civil_status" :value="__('Civil Status')" />
-                                <select id="civil_status" name="civil_status" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- Select Civil Status --</option>
-                                    <option value="Single" @selected(old('civil_status') === 'Single')>Single</option>
-                                    <option value="Married" @selected(old('civil_status') === 'Married')>Married</option>
-                                    <option value="Widowed" @selected(old('civil_status') === 'Widowed')>Widowed</option>
-                                    <option value="Divorced" @selected(old('civil_status') === 'Divorced')>Divorced</option>
-                                    <option value="Separated" @selected(old('civil_status') === 'Separated')>Separated</option>
-                                    <option value="Other" @selected(old('civil_status') === 'Other')>Other</option>
-                                </select>
-                                <x-input-error :messages="$errors->get('civil_status')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <!-- Citizenship & Religion -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <x-input-label for="citizenship" :value="__('Citizenship')" />
-                                <x-text-input id="citizenship" class="block mt-1 w-full" type="text" name="citizenship" :value="old('citizenship', 'Filipino')" />
-                                <x-input-error :messages="$errors->get('citizenship')" class="mt-2" />
-                            </div>
-
-                            <div>
-                                <x-input-label for="religion" :value="__('Religion')" />
-                                <x-text-input id="religion" class="block mt-1 w-full" type="text" name="religion" :value="old('religion')" />
-                                <x-input-error :messages="$errors->get('religion')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <!-- Educational Attainment -->
-                        <div class="mb-6">
-                            <x-input-label for="educational_attainment" :value="__('Educational Attainment')" />
-                            <select id="educational_attainment" name="educational_attainment" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">-- Select Level --</option>
-                                <option value="No Formal Education" @selected(old('educational_attainment') === 'No Formal Education')>No Formal Education</option>
-                                <option value="Elementary" @selected(old('educational_attainment') === 'Elementary')>Elementary</option>
-                                <option value="High School" @selected(old('educational_attainment') === 'High School')>High School</option>
-                                <option value="Vocational" @selected(old('educational_attainment') === 'Vocational')>Vocational</option>
-                                <option value="College" @selected(old('educational_attainment') === 'College')>College</option>
-                                <option value="Post-Graduate" @selected(old('educational_attainment') === 'Post-Graduate')>Post-Graduate</option>
-                            </select>
-                            <x-input-error :messages="$errors->get('educational_attainment')" class="mt-2" />
+                        <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-700">
+                            <x-input-label for="religion" :value="__('Email Address')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="religion" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="email" name="religion" placeholder="Enter email (optional)" :value="old('religion')" />
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION 2: HEALTH CONDITION -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-3 border-b-2 border-blue-400">
-                            2️⃣ HEALTH CONDITION
-                        </h3>
-
-                        <!-- With Disability -->
-                        <div class="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <div class="flex items-center gap-4 mb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="with_disability" name="with_disability" value="1" @checked(old('with_disability')) onchange="toggleElement('type_of_disability_div')" class="rounded">
-                                    <span class="text-gray-900 dark:text-gray-100">With Disability</span>
-                                </label>
-                            </div>
-                            <div id="type_of_disability_div" style="display: {{ old('with_disability') ? 'block' : 'none' }}">
-                                <x-input-label for="type_of_disability" :value="__('Type of Disability')" />
-                                <x-text-input id="type_of_disability" class="block mt-1 w-full" type="text" name="type_of_disability" :value="old('type_of_disability')" placeholder="e.g., Visual, Hearing, Motor..." />
-                                <x-input-error :messages="$errors->get('type_of_disability')" class="mt-2" />
-                            </div>
-                        </div>
-
+                <!-- Health & Benefits Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-3 border-t-4 border-green-600">
+                    <h2 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                        🏥 Health & Benefits Information
+                    </h2>
+                    
+                    <!-- Health Basics Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                         <!-- Bedridden -->
-                        <div class="mb-6">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="bedridden" name="bedridden" value="1" @checked(old('bedridden')) class="rounded">
-                                <span class="text-gray-900 dark:text-gray-100">Bedridden</span>
-                            </label>
-                        </div>
-
-                        <!-- With Assistive Device -->
-                        <div class="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <div class="flex items-center gap-4 mb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="with_assistive_device" name="with_assistive_device" value="1" @checked(old('with_assistive_device')) onchange="toggleElement('type_of_assistive_device_div')" class="rounded">
-                                    <span class="text-gray-900 dark:text-gray-100">With Assistive Device</span>
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label :value="__('Bedridden Status')" class="block text-xs font-semibold text-gray-800 dark:text-gray-100 mb-1" />
+                            <div class="space-y-0.5">
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" name="bedridden" value="1" class="form-radio w-3 h-3" @checked(old('bedridden')==='1' || old('bedridden')===1)>
+                                    <span class="ms-2">Yes</span>
                                 </label>
-                            </div>
-                            <div id="type_of_assistive_device_div" style="display: {{ old('with_assistive_device') ? 'block' : 'none' }}">
-                                <x-input-label for="type_of_assistive_device" :value="__('Type of Assistive Device')" />
-                                <x-text-input id="type_of_assistive_device" class="block mt-1 w-full" type="text" name="type_of_assistive_device" :value="old('type_of_assistive_device')" placeholder="e.g., Wheelchair, Walker, Cane..." />
-                                <x-input-error :messages="$errors->get('type_of_assistive_device')" class="mt-2" />
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" name="bedridden" value="0" class="form-radio w-3 h-3" @checked(old('bedridden')==='0' || old('bedridden')===0 || old('bedridden')===null)>
+                                    <span class="ms-2">No</span>
+                                </label>
                             </div>
                         </div>
 
-                        <!-- With Critical Illness -->
-                        <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                            <div class="flex items-center gap-4 mb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="with_critical_illness" name="with_critical_illness" value="1" @checked(old('with_critical_illness')) onchange="toggleElement('specify_illness_div')" class="rounded">
-                                    <span class="text-gray-900 dark:text-gray-100 font-semibold">With Critical Illness</span>
+                        <!-- Assistive Device (Independent) -->
+                        <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-700">
+                            <x-input-label :value="__('Assistive Device?')" class="block text-xs font-semibold text-gray-800 dark:text-gray-100 mb-1" />
+                            <div class="space-y-0.5">
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" name="with_assistive_device" value="1" class="form-radio w-3 h-3 assistive-device-radio" @checked(old('with_assistive_device')==='1' || old('with_assistive_device')===1)>
+                                    <span class="ms-2">Yes</span>
                                 </label>
-                            </div>
-                            <div id="specify_illness_div" style="display: {{ old('with_critical_illness') ? 'block' : 'none' }}">
-                                <x-input-label for="specify_illness" :value="__('Specify Illness')" />
-                                <textarea id="specify_illness" name="specify_illness" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500" rows="3" placeholder="Describe the critical illness...">{{ old('specify_illness') }}</textarea>
-                                <x-input-error :messages="$errors->get('specify_illness')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <!-- PhilHealth Membership -->
-                        <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                            <div class="flex items-center gap-4 mb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="philhealth_member" name="philhealth_member" value="1" @checked(old('philhealth_member')) onchange="toggleElement('philhealth_id_div')" class="rounded">
-                                    <span class="text-gray-900 dark:text-gray-100">PhilHealth Member</span>
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" name="with_assistive_device" value="0" class="form-radio w-3 h-3 assistive-device-radio" @checked(old('with_assistive_device')==='0' || old('with_assistive_device')===0 || old('with_assistive_device')===null)>
+                                    <span class="ms-2">No</span>
                                 </label>
-                            </div>
-                            <div id="philhealth_id_div" style="display: {{ old('philhealth_member') ? 'block' : 'none' }}">
-                                <x-input-label for="philhealth_id" :value="__('PhilHealth ID Number')" />
-                                <x-text-input id="philhealth_id" class="block mt-1 w-full" type="text" name="philhealth_id" :value="old('philhealth_id')" placeholder="Enter PhilHealth ID" />
-                                <x-input-error :messages="$errors->get('philhealth_id')" class="mt-2" />
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- SECTION 3: SOURCE OF INCOME -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-3 border-b-2 border-blue-400">
-                            3️⃣ SOURCE OF INCOME
-                        </h3>
+                    <!-- Specify Assistive Device -->
+                    <div class="mb-2 p-2 bg-amber-100 dark:bg-amber-900/30 rounded border border-amber-300 dark:border-amber-700" id="specify_device_container" style="display: none;">
+                        <x-input-label for="type_of_assistive_device" :value="__('Specify Device Type')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                        <x-text-input id="type_of_assistive_device" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="type_of_assistive_device" placeholder="e.g., Wheelchair, Crutches, Walker" :value="old('type_of_assistive_device')" />
+                    </div>
 
-                        <!-- Pensioner Status -->
-                        <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <div class="flex items-center gap-4 mb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="is_pensioner" name="is_pensioner" value="1" @checked(old('is_pensioner')) onchange="toggleElement('pension_details_div')" class="rounded">
-                                    <span class="text-gray-900 dark:text-gray-100 font-semibold">Is a Pensioner</span>
+                    <!-- Disability Section -->
+                    <div class="mb-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                        <x-input-label :value="__('Disability Status')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                        <div>
+                            <label class="flex items-center cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
+                                <input type="checkbox" name="with_disability" value="1" class="form-checkbox rounded" @checked(old('with_disability'))>
+                                <span class="ms-2 text-xs text-gray-700 dark:text-gray-200">Has Disability</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Type of Disability -->
+                    <div class="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700" id="cause_disability_container" style="display: none;">
+                        <x-input-label for="type_of_disability" :value="__('Type of Disability')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                        <select id="type_of_disability" name="type_of_disability" class="block w-full text-xs border-gray-300 dark:border-gray-600 rounded-md">
+                            <option value="">-- Select Type --</option>
+                            <option value="Deaf" @selected(old('type_of_disability')==='Deaf')>Deaf or Hard of Hearing</option>
+                            <option value="Intellectual Disability" @selected(old('type_of_disability')==='Intellectual Disability')>Intellectual Disability</option>
+                            <option value="Learning Disability" @selected(old('type_of_disability')==='Learning Disability')>Learning Disability</option>
+                            <option value="Mental Disability" @selected(old('type_of_disability')==='Mental Disability')>Mental Disability</option>
+                            <option value="Physical disability" @selected(old('type_of_disability')==='Physical disability')>Physical disability</option>
+                            <option value="Psychosocial Disability" @selected(old('type_of_disability')==='Psychosocial Disability')>Psychosocial Disability</option>
+                            <option value="Speech and language impairment" @selected(old('type_of_disability')==='Speech and language impairment')>Speech and language impairment</option>
+                            <option value="Visual Disability" @selected(old('type_of_disability')==='Visual Disability')>Visual Disability</option>
+                            <option value="Cancer" @selected(old('type_of_disability')==='Cancer')>Cancer</option>
+                            <option value="Rare Disease" @selected(old('type_of_disability')==='Rare Disease')>Rare Disease</option>
+                        </select>
+                        <x-input-label for="cause_of_disability" :value="__('Cause of Disability')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1 mt-2" />
+                        <div class="space-y-0.5">
+                            <label class="flex items-center cursor-pointer text-xs">
+                                <input type="radio" name="cause_of_disability" value="Congenital/Inborn" class="form-radio w-3 h-3" @checked(old('cause_of_disability')==='Congenital/Inborn')>
+                                <span class="ms-2">Congenital/Inborn</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer text-xs">
+                                <input type="radio" name="cause_of_disability" value="Acquired" class="form-radio w-3 h-3" @checked(old('cause_of_disability')==='Acquired')>
+                                <span class="ms-2">Acquired</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Pensioner and Pension Type Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label :value="__('Is Pensioner?')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                            <div class="space-y-0.5">
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" id="pensioner_yes" name="is_pensioner" value="1" class="form-radio w-3 h-3 pensioner-radio" @checked(old('is_pensioner')==='1' || old('is_pensioner')===1)>
+                                    <span class="ms-2">Yes</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer text-xs">
+                                    <input type="radio" id="pensioner_no" name="is_pensioner" value="0" class="form-radio w-3 h-3 pensioner-radio" @checked(old('is_pensioner')==='0' || old('is_pensioner')===0 || old('is_pensioner')===null)>
+                                    <span class="ms-2">No</span>
                                 </label>
                             </div>
-                            <div id="pension_details_div" style="display: {{ old('is_pensioner') ? 'block' : 'none' }}">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <x-input-label for="pension_type" :value="__('Type of Pension')" />
-                                        <select id="pension_type" name="pension_type" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                            <option value="">-- Select Type --</option>
-                                            <option value="SSS" @selected(old('pension_type') === 'SSS')>SSS (Social Security System)</option>
-                                            <option value="GSIS" @selected(old('pension_type') === 'GSIS')>GSIS (Government Service Insurance)</option>
-                                            <option value="PVAO" @selected(old('pension_type') === 'PVAO')>PVAO (Veterans Affairs)</option>
-                                            <option value="Private" @selected(old('pension_type') === 'Private')>Private Pension</option>
-                                            <option value="Others" @selected(old('pension_type') === 'Others')>Others</option>
-                                        </select>
-                                        <x-input-error :messages="$errors->get('pension_type')" class="mt-2" />
-                                    </div>
-
-                                    <div>
-                                        <x-input-label for="monthly_pension_amount" :value="__('Monthly Pension Amount (₱)')" />
-                                        <x-text-input id="monthly_pension_amount" class="block mt-1 w-full" type="number" name="monthly_pension_amount" :value="old('monthly_pension_amount')" step="0.01" min="0" placeholder="0.00" />
-                                        <x-input-error :messages="$errors->get('monthly_pension_amount')" class="mt-2" />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        <!-- Other Income Source -->
-                        <div class="mb-6">
-                            <x-input-label for="other_income_source" :value="__('Other Income Source (if any)')" />
-                            <textarea id="other_income_source" name="other_income_source" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500" rows="2" placeholder="e.g., Remittance, Self-employment, Rentals...">{{ old('other_income_source') }}</textarea>
-                            <x-input-error :messages="$errors->get('other_income_source')" class="mt-2" />
+                        <!-- Pension Type (shown when pensioner is yes) -->
+                        <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded border-l-4 border-purple-500" id="pension_type_container" style="display: none;">
+                            <x-input-label for="pension_type" :value="__('Pension Type')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                            <select id="pension_type" name="pension_type" class="block w-full text-xs border-gray-300 dark:border-gray-600 rounded-md">
+                                <option value="">-- Select Pension Type --</option>
+                                <option value="SSS" @selected(old('pension_type')==='SSS')>SSS (Social Security System)</option>
+                                <option value="GSIS" @selected(old('pension_type')==='GSIS')>GSIS (Government Service Insurance System)</option>
+                                <option value="PVAO" @selected(old('pension_type')==='PVAO')>PVAO (Philippine Veterans Affairs Office)</option>
+                                <option value="Others" @selected(old('pension_type')==='Others')>Other</option>
+                            </select>
                         </div>
+                    </div>
 
-                        <!-- Total Monthly Income -->
-                        <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                            <x-input-label for="total_monthly_income" :value="__('Total Monthly Income (₱)')" />
-                            <x-text-input id="total_monthly_income" class="block mt-1 w-full text-lg font-bold" type="number" name="total_monthly_income" :value="old('total_monthly_income')" step="0.01" min="0" placeholder="0.00" />
-                            <p class="text-sm text-purple-700 dark:text-purple-300 mt-2">This will help classify as indigent if below poverty threshold</p>
-                            <x-input-error :messages="$errors->get('total_monthly_income')" class="mt-2" />
+                    <!-- PhilHealth ID and Source of Income -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="philhealth_id" :value="__('PhilHealth ID')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                            <x-text-input id="philhealth_id" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="philhealth_id" placeholder="Enter PhilHealth ID (optional)" :value="old('philhealth_id')" />
                         </div>
+                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                            <x-input-label for="source_of_income" :value="__('Source of Income')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                            <select id="source_of_income" name="source_of_income" class="block w-full text-xs border-gray-300 dark:border-gray-600 rounded-md">
+                                <option value="">-- Select Source --</option>
+                                <option value="Employment/Salary" @selected(old('source_of_income')==='Employment/Salary')>Employment/Salary</option>
+                                <option value="Pension" @selected(old('source_of_income')==='Pension')>Pension</option>
+                                <option value="Self-Employment" @selected(old('source_of_income')==='Self-Employment')>Self-Employment</option>
+                                <option value="Remittance" @selected(old('source_of_income')==='Remittance')>Remittance</option>
+                                <option value="Business" @selected(old('source_of_income')==='Business')>Business</option>
+                                <option value="Government Assistance" @selected(old('source_of_income')==='Government Assistance')>Government Assistance</option>
+                                <option value="Others" @selected(old('source_of_income')==='Others')>Others</option>
+                            </select>
+                        </div>
+                    </div>
 
-                        <!-- Mark as Indigent -->
-                        <div class="mb-6">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="is_indigent" name="is_indigent" value="1" @checked(old('is_indigent')) class="rounded">
-                                <span class="text-gray-900 dark:text-gray-100">Mark as Indigent / Low Income</span>
-                            </label>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Check if total monthly income is below poverty threshold</p>
-                        </div>
+                    <!-- Specify Other Income Source (shown when Others is selected) -->
+                    <div class="mb-2 p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700" id="specify_income_container" style="display: none;">
+                        <x-input-label for="other_income_source_specify" :value="__('Please Specify Other Income Source')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
+                        <x-text-input id="other_income_source_specify" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="other_income_source_specify" placeholder="e.g., Rental income, Savings interest, etc." :value="old('other_income_source_specify')" />
                     </div>
                 </div>
 
-                <!-- SECTION 4: FAMILY COMPOSITION -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-3 border-b-2 border-blue-400">
-                            4️⃣ FAMILY COMPOSITION
-                        </h3>
-
-                        <div id="family_members_container">
-                            <!-- Family members will be added here dynamically -->
-                            @if(old('family_members'))
-                                @foreach(old('family_members') as $index => $member)
-                                    @if(!empty($member['name']))
-                                        <div class="family-member-row mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500" data-index="{{ $index }}">
-                                            <button type="button" class="float-right mb-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="removeFamilyMember(this)">Remove</button>
-                                            <div class="clear-both">
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                                                        <input type="text" name="family_members[{{ $index }}][name]" value="{{ $member['name'] ?? '' }}" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relationship</label>
-                                                        <input type="text" name="family_members[{{ $index }}][relationship]" value="{{ $member['relationship'] ?? '' }}" placeholder="Child, Grandchild, Sibling..." class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
-                                                        <input type="number" name="family_members[{{ $index }}][age]" value="{{ $member['age'] ?? '' }}" min="0" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Civil Status</label>
-                                                        <input type="text" name="family_members[{{ $index }}][civil_status]" value="{{ $member['civil_status'] ?? '' }}" placeholder="Single, Married..." class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Occupation</label>
-                                                        <input type="text" name="family_members[{{ $index }}][occupation]" value="{{ $member['occupation'] ?? '' }}" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monthly Income (₱)</label>
-                                                        <input type="number" name="family_members[{{ $index }}][monthly_income]" value="{{ $member['monthly_income'] ?? '' }}" step="0.01" min="0" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-                                                        <input type="text" name="family_members[{{ $index }}][address]" value="{{ $member['address'] ?? '' }}" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @endif
-                        </div>
-
-                        <button type="button" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600" onclick="addFamilyMember()">
-                            + Add Family Member
+                <!-- Family Members Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-3 border-t-4 border-yellow-600">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-base font-bold text-gray-800 dark:text-gray-100 pb-2 border-b border-gray-200 dark:border-gray-700 flex-1">
+                            👨‍👩‍👧‍👦 Family Members
+                        </h2>
+                        <button type="button" onclick="addFamilyMember()" class="ml-3 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded shadow transition">
+                            + Add
                         </button>
                     </div>
+                    <div id="family_members_container" class="space-y-1"></div>
+                    <input type="hidden" id="family_members_data" name="family_members_json" />
                 </div>
 
-                <!-- SECTION 5: ADDITIONAL INFORMATION & REMARKS -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-3 border-b-2 border-blue-400">
-                            5️⃣ ADDITIONAL INFORMATION & REMARKS
-                        </h3>
-
-                        <div class="mb-6">
-                            <x-input-label for="remarks" :value="__('Remarks')" />
-                            <select id="remarks" name="remarks" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">-- Select Remark --</option>
-                                @foreach(\App\Constants\Remarks::list() as $remark)
-                                    <option value="{{ $remark }}" @selected(old('remarks') === $remark)>{{ $remark }}</option>
-                                @endforeach
-                            </select>
-                            <x-input-error :messages="$errors->get('remarks')" class="mt-2" />
-                        </div>
-
-                        <div class="mb-6">
-                            <label class="flex items-center gap-3">
-                                <input type="checkbox" id="waitlist" name="waitlist" value="1" @checked(old('waitlist')) class="rounded">
-                                <span class="text-gray-900 dark:text-gray-100">On Waitlist</span>
-                            </label>
-                        </div>
-
-                        <div>
-                            <label class="flex items-center gap-3">
-                                <input type="checkbox" id="social_pension" name="social_pension" value="1" @checked(old('social_pension')) class="rounded">
-                                <span class="text-gray-900 dark:text-gray-100">Social Pension Recipient</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ACTION BUTTONS -->
-                <div class="flex gap-4 mb-6">
-                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                        Save Senior Citizen
+                <!-- Action Buttons -->
+                <div class="flex gap-2 mb-3">
+                    <button type="submit" class="px-5 py-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow transition text-xs" onclick="prepareFormSubmit(event)">
+                        Save
                     </button>
-                    <a href="{{ route('senior-citizens.index') }}" class="px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition">
+                    <a href="{{ route('senior-citizens.index') }}" class="px-5 py-1.5 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded shadow transition text-xs">
                         Cancel
                     </a>
                 </div>
@@ -416,85 +284,116 @@
     </div>
 
     <script>
-        let familyMemberCount = @json(count(old('family_members', [])));
-
-        function computeAge() {
-            const dobInput = document.getElementById('date_of_birth');
-            if (!dobInput.value) return;
-
-            const dob = new Date(dobInput.value);
-            const today = new Date();
-            let age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                age--;
-            }
-
-            console.log('Computed age:', age);
-        }
-
-        function toggleElement(elementId) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.style.display = element.style.display === 'none' ? 'block' : 'none';
-            }
-        }
-
-        function addFamilyMember() {
-            const container = document.getElementById('family_members_container');
-            const index = familyMemberCount++;
-
-            const html = `
-                <div class="family-member-row mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500" data-index="${index}">
-                    <button type="button" class="float-right mb-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onclick="removeFamilyMember(this)">Remove</button>
-                    <div class="clear-both">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                                <input type="text" name="family_members[${index}][name]" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relationship</label>
-                                <input type="text" name="family_members[${index}][relationship]" placeholder="Child, Grandchild, Sibling..." class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
-                                <input type="number" name="family_members[${index}][age]" min="0" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Civil Status</label>
-                                <input type="text" name="family_members[${index}][civil_status]" placeholder="Single, Married..." class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Occupation</label>
-                                <input type="text" name="family_members[${index}][occupation]" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monthly Income (₱)</label>
-                                <input type="number" name="family_members[${index}][monthly_income]" step="0.01" min="0" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-                                <input type="text" name="family_members[${index}][address]" class="block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                        </div>
-                    </div>
+        function computeAge(){var d=document.getElementById('date_of_birth');if(!d.value)return;var dob=new Date(d.value),t=new Date(),age=t.getFullYear()-dob.getFullYear(),m=t.getMonth()-dob.getMonth();if(m<0||(m===0&&t.getDate()<dob.getDate()))age--;console.log(age);}        
+        let familyMemberCount=0;
+        function addFamilyMember(){
+            const c=document.getElementById('family_members_container');
+            const i=familyMemberCount++;
+            const h=`<div class="family-member-row p-2 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded border border-yellow-200 dark:border-yellow-700 shadow-sm" data-index="${i}">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-200">Member #${i+1}</h4>
+                    <button type="button" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-bold text-sm" onclick="this.closest('.family-member-row').remove()">×</button>
                 </div>
-            `;
-
-            container.insertAdjacentHTML('beforeend', html);
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" name="family_members[${i}][name]" placeholder="Full Name" class="text-xs w-full border-gray-300 dark:border-gray-600 rounded" required>
+                    <input type="text" name="family_members[${i}][relationship]" placeholder="Relationship" class="text-xs w-full border-gray-300 dark:border-gray-600 rounded" required>
+                    <input type="number" name="family_members[${i}][age]" placeholder="Age" min="0" max="150" class="text-xs w-full border-gray-300 dark:border-gray-600 rounded">
+                </div>
+            </div>`;
+            c.insertAdjacentHTML('beforeend',h);
         }
-
-        function removeFamilyMember(button) {
-            const row = button.closest('.family-member-row');
-            if (row) {
-                row.remove();
+        
+        // Disability checkbox
+        const disabilityCheckbox = document.querySelector('input[name="with_disability"]');
+        disabilityCheckbox.addEventListener('change', function() {
+            document.getElementById('cause_disability_container').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                document.getElementById('type_of_disability').value = '';
             }
+        });
+
+        // Assistive Device radio buttons (independent from bedridden)
+        document.querySelectorAll('input[name="with_assistive_device"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('specify_device_container').style.display = this.value === '1' ? 'block' : 'none';
+                if (this.value === '0') {
+                    document.getElementById('type_of_assistive_device').value = '';
+                }
+            });
+        });
+
+        // Pensioner radio buttons
+        document.querySelectorAll('input[name="is_pensioner"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('pension_type_container').style.display = this.value === '1' ? 'block' : 'none';
+                if (this.value === '0') {
+                    document.getElementById('pension_type').value = '';
+                }
+            });
+        });
+
+        // Source of Income select
+        document.getElementById('source_of_income').addEventListener('change', function() {
+            document.getElementById('specify_income_container').style.display = this.value === 'Others' ? 'block' : 'none';
+            if (this.value !== 'Others') {
+                document.getElementById('other_income_source_specify').value = '';
+            }
+        });
+
+        // Pension Type select
+        document.getElementById('pension_type').addEventListener('change', function() {
+            document.getElementById('other_pension_container').style.display = this.value === 'other' ? 'block' : 'none';
+            if (this.value !== 'other') {
+                document.getElementById('other_pension_type').value = '';
+            }
+        });
+
+        // PhilHealth radio buttons
+        document.querySelectorAll('input[name="has_philhealth"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('philhealth_id').disabled = this.value === 'no';
+                if (this.value === 'no') {
+                    document.getElementById('philhealth_id').value = '';
+                }
+            });
+        });
+
+        // Prepare form submission with family members
+        function prepareFormSubmit(event) {
+            const familyMembers = [];
+            document.querySelectorAll('.family-member-row').forEach(row => {
+                const name = row.querySelector('input[placeholder="Full Name"]').value;
+                if (name) {
+                    familyMembers.push({
+                        name: name,
+                        relationship: row.querySelector('input[placeholder="Relationship"]').value,
+                        age: row.querySelector('input[placeholder="Age"]').value
+                    });
+                }
+            });
+            // Store family members data in hidden field
+            document.getElementById('family_members_data').value = JSON.stringify(familyMembers);
         }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show type of disability if disability is checked
+            const disabilityCheckbox = document.querySelector('input[name="with_disability"]');
+            if (disabilityCheckbox) {
+                document.getElementById('cause_disability_container').style.display = disabilityCheckbox.checked ? 'block' : 'none';
+            }
+
+            // Show pension type if pensioner is yes
+            const pensionerYes = document.getElementById('pensioner_yes').checked;
+            document.getElementById('pension_type_container').style.display = pensionerYes ? 'block' : 'none';
+
+            // Handle assistive device visibility
+            const hasDevice = document.querySelector('input[name="with_assistive_device"]:checked');
+            document.getElementById('specify_device_container').style.display = (hasDevice && hasDevice.value === '1') ? 'block' : 'none';
+
+            // Handle source of income visibility
+            const sourceOfIncome = document.getElementById('source_of_income').value;
+            document.getElementById('specify_income_container').style.display = sourceOfIncome === 'Others' ? 'block' : 'none';
+        });
     </script>
 </x-app-layout>

@@ -26,30 +26,37 @@
                             </div>
                         </div>
 
-                        <!-- Filters and export -->
-                        <form method="GET" action="{{ route('reports.barangay') }}" class="mb-4 flex flex-wrap gap-2 items-center">
-                            <input type="hidden" name="barangay" value="{{ $selected }}">
-
-                            <input type="text" name="search" placeholder="Search name or OSCA ID" value="{{ request('search') }}" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm" />
-
-                            <select name="sex" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                                <option value="">Sex</option>
-                                <option value="Male" {{ request('sex') === 'Male' ? 'selected' : '' }}>Male</option>
-                                <option value="Female" {{ request('sex') === 'Female' ? 'selected' : '' }}>Female</option>
-                                <option value="Other" {{ request('sex') === 'Other' ? 'selected' : '' }}>Other</option>
-                            </select>
-
-                            <select name="age_range" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                                <option value="">Age Range</option>
-                                <option value="60-69" {{ request('age_range') === '60-69' ? 'selected' : '' }}>60-69</option>
-                                <option value="70-79" {{ request('age_range') === '70-79' ? 'selected' : '' }}>70-79</option>
-                                <option value="80+" {{ request('age_range') === '80+' ? 'selected' : '' }}>80+</option>
-                            </select>
-
-                            <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">Filter</button>
-
-                            <a href="{{ route('reports.barangay.export', request()->query()) }}" class="px-3 py-1 bg-gray-800 text-white rounded-md text-xs">Export CSV</a>
-                        </form>
+                        <!-- Unified Filters -->
+                        <x-filter-bar
+                            :action="route('reports.barangay', ['barangay' => $selected])"
+                            :resetUrl="route('reports.barangay', ['barangay' => $selected])"
+                            :hasActiveFilters="request()->filled('search') || request()->filled('sex') || request()->filled('age_range') || request()->filled('age_exact')"
+                            :activeCount="(request()->filled('search') ? 1 : 0) + (request()->filled('sex') ? 1 : 0) + (request()->filled('age_range') || request()->filled('age_exact') ? 1 : 0) + (request('sort') && request('sort') !== 'name_asc' ? 1 : 0)"
+                        >
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Search</label>
+                                <input type="text" name="search" placeholder="Search name or OSCA ID" value="{{ request('search') }}" class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Sex</label>
+                                <select name="sex" class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All</option>
+                                    <option value="Male" {{ request('sex') === 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ request('sex') === 'Female' ? 'selected' : '' }}>Female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <x-age-range-filter name="age_range" :value="request('age_range')" />
+                            </div>
+                            <div>
+                                <x-sort-dropdown />
+                            </div>
+                            <div class="flex items-end">
+                                <a href="{{ route('reports.barangay.export', request()->query()) }}" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-700 dark:bg-gray-800 text-white text-xs md:text-sm font-medium rounded-md hover:bg-gray-800 dark:hover:bg-gray-700 transition">
+                                    📥 Export CSV
+                                </a>
+                            </div>
+                        </x-filter-bar>
 
                         @if($seniorCitizens->isEmpty())
                             <p class="text-gray-600 dark:text-gray-400">No records found in this barangay.</p>
@@ -70,7 +77,7 @@
                                         @foreach($seniorCitizens as $citizen)
                                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                                 <td class="px-6 py-4 font-medium">{{ $citizen->getFormattedDisplayName() }}</td>
-                                                <td class="px-6 py-4">{{ $citizen->exact_age }}</td>
+                                                <td class="px-6 py-4">{{ $citizen->age }}</td>
                                                 <td class="px-6 py-4">{{ $citizen->sex }}</td>
                                                 <td class="px-6 py-4">{{ $citizen->osca_id }}</td>
                                                 <td class="px-6 py-4">{{ $citizen->contact_number ?? 'N/A' }}</td>

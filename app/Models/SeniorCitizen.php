@@ -39,10 +39,17 @@ class SeniorCitizen extends Model
         'barangay',
         'contact_number',
         'osca_id',
+        'national_id',
+
+        // death information (for archived records)
+        'date_of_death',
+        'cause_of_death',
+        'death_certificate_number',
         
         // Health Condition Section
         'with_disability',
         'type_of_disability',
+        'cause_of_disability',
         'bedridden',
         'with_assistive_device',
         'type_of_assistive_device',
@@ -56,6 +63,8 @@ class SeniorCitizen extends Model
         'pension_type',
         'monthly_pension_amount',
         'other_income_source',
+        'other_income_source_specify',
+        'source_of_income',
         'total_monthly_income',
         
         // Classification
@@ -91,6 +100,7 @@ class SeniorCitizen extends Model
         'is_indigent' => 'boolean',
         'monthly_pension_amount' => 'decimal:2',
         'total_monthly_income' => 'decimal:2',
+        'date_of_death' => 'date',
     ];
 
     /**
@@ -124,7 +134,14 @@ class SeniorCitizen extends Model
             if ($dob->isFuture()) {
                 $this->_computed_age = 0;
             } else {
-                $this->_computed_age = (int) now()->diffInYears($dob);
+                // compute age from the date of birth toward the current time
+                // using the birthdate as the starting point so that the result
+                // is always non-negative even if Carbon's diffInYears defaults
+                // to a signed value. (see bug where now()->diffInYears($dob)
+                // returned a negative float on Windows/PHP 8+).
+                $this->_computed_age = (int) $dob->diffInYears(now());
+                // alternatively: now()->diffInYears($dob, true) would also work,
+                // but using the birthdate makes the intention clearer.
             }
 
             return max(0, $this->_computed_age);
@@ -161,6 +178,14 @@ class SeniorCitizen extends Model
     }
 
     /**
+     * Helper for CSV/list exports – the month-day when the record was created.
+     */
+    public function getIssuanceDateAttribute()
+    {
+        return $this->created_at ? $this->created_at->format('m-d') : '';
+    }
+
+    /**
      * Get age_range - optimized mapping from computed age
      * Cached to avoid recalculation during a single request
      */
@@ -184,19 +209,33 @@ class SeniorCitizen extends Model
     }
 
     /**
-     * Get the formatted display name (e.g., "Rosita M. Miano")
+     * Get the formatted display name for listings and headers.
+     *
+     * Old format used first name then last name with an initial; the
+     * requirement now is to display the last name first, followed by a
+     * comma and the first name and full middle name if present.  This
+     * makes it easier to scan lists and match the CSV exports.
+     *
+     * Example: "Calupas, Ace Ziegfred" instead of "Ace Z. Calupas".
      */
     public function getFormattedDisplayName()
     {
-        $name = $this->firstname;
-        
-        if ($this->middlename) {
-            $name .= ' ' . substr($this->middlename, 0, 1) . '.';
+        $parts = [];
+        if ($this->lastname) {
+            $parts[] = $this->lastname;
         }
-        
-        $name .= ' ' . $this->lastname;
-        
-        return $name;
+
+        // build second segment: firstname + middlename
+        $second = trim($this->firstname ?? '');
+        if ($this->middlename) {
+            $second .= ' ' . $this->middlename;
+        }
+
+        if ($second !== '') {
+            $parts[] = $second;
+        }
+
+        return implode(', ', $parts);
     }
 
     /**
@@ -268,6 +307,14 @@ class SeniorCitizen extends Model
     }
 
     /**
+     * Get pension distributions for this senior citizen
+     */
+    public function pensiondistributions()
+    {
+        return $this->hasMany(PensionDistribution::class, 'senior_citizen_id');
+    }
+
+    /**
      * Get audit logs for this senior citizen
      */
     public function auditLogs()
@@ -284,5 +331,69 @@ class SeniorCitizen extends Model
     public function recentAuditLogs($limit = 10)
     {
         return $this->auditLogs()->take($limit);
+    }
+
+    // ============ SCOPES FOR BETTER QUERY ORGANIZATION ============
+
+    /**
+     * Scope: Filter by social pension status
+     */
+    public function scopeBySocialPension($query, $status = true)
+    {
+        return $query->where('social_pension', $status);
+    }
+
+    /**
+     * Scope: Filter by waitlist status
+     */
+    public function scopeByWaitlist($query, $status = true)
+    {
+        return $query->where('waitlist', $status);
+    }
+
+    /**
+     * Scope: Filter by disability status
+     */
+    public function scopeByDisability($query, $status = true)
+    {
+        return $query->where('with_disability', $status);
+    }
+
+    /**
+     * Scope: Filter by barangay
+     */
+    public function scopeByBarangay($query, $barangay)
+    {
+        return $query->where('barangay', $barangay);
+    }
+
+    /**
+     * Scope: Filter by age range
+     */
+    public function scopeByAgeRange($query, $range)
+    {
+        return match($range) {
+            '60-69' => $query->whereBetween('age', [60, 69]),
+            '70-79' => $query->whereBetween('age', [70, 79]),
+            '80-89' => $query->whereBetween('age', [80, 89]),
+            '90+' => $query->where('age', '>=', 90),
+            default => $query,
+        };
+    }
+
+    /**
+     * Scope: Filter by sex/gender
+     */
+    public function scopeBySex($query, $sex)
+    {
+        return $query->where('sex', $sex);
+    }
+
+    /**
+     * Scope: Only active (non-deleted) records
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
     }
 }

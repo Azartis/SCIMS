@@ -28,6 +28,9 @@ class SeniorCitizenFactory extends Factory
         $age   = Carbon::parse($dob)->diffInYears(now());
         $sex   = $this->faker->randomElement(['Male', 'Female', 'Other']);
 
+        // prepare optional death data
+        $deathDateObj = $this->faker->optional(0.1)->dateTimeBetween('-1 years', 'now');
+
         return [
             'firstname' => $first,
             'middlename' => $this->faker->optional()->firstName,
@@ -66,6 +69,10 @@ class SeniorCitizenFactory extends Factory
             'waitlist' => $this->faker->boolean(5),
             'social_pension' => $this->faker->boolean(5),
             'remarks' => $this->faker->optional()->sentence,
+            // optionally include death info for archived fixtures
+            'date_of_death' => $deathDateObj ? $deathDateObj->format('Y-m-d') : null,
+            'cause_of_death' => $this->faker->optional(0.1)->sentence,
+            'death_certificate_number' => $this->faker->optional(0.1)->bothify('DC#####'),
         ];
     }
 

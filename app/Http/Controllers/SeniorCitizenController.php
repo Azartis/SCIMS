@@ -5,89 +5,141 @@ namespace App\Http\Controllers;
 use App\Models\SeniorCitizen;
 use App\Models\FamilyMember;
 use App\Models\AuditLog;
+use App\Services\FilterService;
 use Illuminate\Http\Request;
+use App\Http\Controllers\DashboardController;
 
 class SeniorCitizenController extends Controller
 {
     /**
      * Display a listing of the senior citizens with advanced filtering.
+     * 
+     * Uses the FilterService for clean, reusable filtering logic.
+     * Supports: text search, select filters, boolean filters, classification, age ranges.
      */
     public function index(Request $request)
     {
+        // If user types a plain number in the general search box (e.g. "71"),
+        // interpret it as an exact age unless an explicit age filter is already chosen.
+        if (
+            $request->filled('search')
+            && !$request->filled('age_exact')
+            && !$request->filled('age_range')
+            && is_numeric(trim((string) $request->input('search')))
+        ) {
+            $n = (int) trim((string) $request->input('search'));
+            if ($n >= 60 && $n <= 120) {
+                $request->merge([
+                    'age_exact' => (string) $n,
+                    'search' => null,
+                ]);
+            }
+        }
+
+        // Initialize the query and filter service
         $query = SeniorCitizen::withoutTrashed();
+        $filterService = new FilterService($query, $request);
 
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%{$search}%")
-                  ->orWhere('middlename', 'like', "%{$search}%")
-                  ->orWhere('lastname', 'like', "%{$search}%")
-                  ->orWhere('fullname', 'like', "%{$search}%")
-                  ->orWhere('osca_id', 'like', "%{$search}%")
-                  ->orWhere('contact_number', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%");
-            });
-        }
+        // Register filters using the service
+        $filterService
+            ->textSearch('search', [
+                'firstname', 'middlename', 'lastname', 'fullname',
+                'osca_id', 'contact_number', 'address'
+            ], [
+                'label' => 'Search',
+                'placeholder' => 'Name, OSCA ID, contact, or address...',
+                'icon' => '🔍',
+            ])
+            ->select('sex', 'sex', [
+                'Male' => 'Male',
+                'Female' => 'Female',
+                'Other' => 'Other',
+            ], [
+                'label' => 'Sex',
+                'icon' => '👥',
+            ])
+            ->select('barangay', 'barangay', 
+                array_combine(
+                    \App\Constants\Barangay::list(), 
+                    \App\Constants\Barangay::list()
+                ), [
+                'label' => 'Barangay',
+                'icon' => '📍',
+            ])
+            ->boolean('social_pension', 'social_pension', [
+                'label' => 'Social Pension',
+                'icon' => '💰',
+            ])
+            ->select('pension_type', 'pension_type', [
+                'sss' => 'SSS',
+                'gsis' => 'GSIS',
+                'pvao' => 'PVAO',
+            ], [
+                'label' => 'Pension Type',
+                'icon' => '🎓',
+            ])
+            ->select('classification', null, [
+                'pensioners' => '💼 Pensioners',
+                'indigent' => '🤝 Indigent',
+                'with_disability' => '♿ Persons with Disability',
+                'bedridden' => '🛏️ Bedridden',
+                'critical_illness' => '⚕️ Critical Illness',
+            ], [
+                'label' => 'Classification',
+                'icon' => '📋',
+            ])
+            ->custom('classification', function($q, $value) {
+                switch ($value) {
+                    case 'pensioners':
+                        $q->where('is_pensioner', true);
+                        break;
+                    case 'indigent':
+                        $q->where('is_indigent', true);
+                        break;
+                    case 'with_disability':
+                        $q->where('with_disability', true);
+                        break;
+                    case 'bedridden':
+                        $q->where('bedridden', true);
+                        break;
+                    case 'critical_illness':
+                        $q->where('with_critical_illness', true);
+                        break;
+                }
+            }, ['label' => 'Classification', 'icon' => '📋'])
+            ->custom('age_exact', function($q, $value) {
+                if (is_numeric($value) && (int)$value >= 60) {
+                    $q->where('age', (int)$value);
+                }
+            }, ['label' => 'Exact Age', 'icon' => '🎂'])
+            ->custom('age_range', function($q, $value, $req) {
+                if ($req->filled('age_exact')) return; // exact age takes precedence
+                $value = trim($value ?? '');
+                if ($value === '') return;
+                if (preg_match('/^(\d+)-(\d+)$/', $value, $m)) {
+                    $q->whereBetween('age', [(int)$m[1], (int)$m[2]]);
+                } elseif ($value === '80+') {
+                    $q->where('age', '>=', 80);
+                }
+            }, ['label' => 'Age Range', 'icon' => '🎂']);
 
-        // Filter by sex
-        if ($request->filled('sex') && $request->sex !== '') {
-            $query->where('sex', $request->sex);
-        }
+        // Get the filtered query
+        $query = $filterService->getQuery();
 
-        // Filter by barangay
-        if ($request->filled('barangay') && $request->barangay !== '') {
-            $query->where('barangay', $request->barangay);
-        }
+        // Apply sorting
+        $sort = $request->query('sort', 'name_asc');
+        $query = $this->applySort($query, $sort);
+        $seniorCitizens = $query->paginate(15)->appends($request->query());
 
-        // Filter by classification/categorization
-        if ($request->filled('classification') && $request->classification !== '') {
-            $classification = $request->classification;
-            switch ($classification) {
-                case 'pensioners':
-                    $query->where('is_pensioner', true);
-                    break;
-                case 'indigent':
-                    $query->where('is_indigent', true);
-                    break;
-                case 'with_disability':
-                    $query->where('with_disability', true);
-                    break;
-                case 'bedridden':
-                    $query->where('bedridden', true);
-                    break;
-                case 'critical_illness':
-                    $query->where('with_critical_illness', true);
-                    break;
-            }
-        }
-
-        // Filter by age range
-        if ($request->filled('age_range') && $request->age_range !== '') {
-            $query->where('age_range', $request->age_range);
-        }
-
-        // Legacy filters for backward compatibility
-        if ($request->filled('pension_type') && $request->pension_type !== '') {
-            $pensionType = $request->pension_type;
-            if ($pensionType === 'none') {
-                $query->where('is_pensioner', false);
-            } else {
-                $query->where('pension_type', $pensionType);
-            }
-        }
-
-        if ($request->filled('status') && $request->status !== '') {
-            $status = $request->status;
-            if ($status === 'waitlist') {
-                $query->where('waitlist', true);
-            } elseif ($status === 'social_pension') {
-                $query->where('social_pension', true);
-            }
-        }
-
-        $seniorCitizens = $query->paginate(10)->appends($request->query());
-        return view('senior-citizens.index', compact('seniorCitizens'));
+        // Pass filter information to view
+        return view('senior-citizens.index', [
+            'seniorCitizens' => $seniorCitizens,
+            'filterService' => $filterService,
+            'filters' => $filterService->getAllFilters(),
+            'activeFilters' => $filterService->getActiveFilters(),
+            'activeFilterCount' => $filterService->getActiveFilterCount(),
+            'barangays' => \App\Constants\Barangay::list(),
+        ]);
     }
 
     /**
@@ -109,6 +161,20 @@ class SeniorCitizenController extends Controller
             });
         }
 
+        // Age filter: exact takes precedence over range
+        if ($request->filled('age_exact') && is_numeric($request->age_exact)) {
+            $query->where('age', (int)$request->age_exact);
+        } elseif ($request->filled('age_range') && $request->age_range !== '') {
+            $ageRange = $request->age_range;
+            if (preg_match('/^(\d+)-(\d+)$/', $ageRange, $matches)) {
+                $query->whereBetween('age', [(int)$matches[1], (int)$matches[2]]);
+            } elseif ($ageRange === '80+') {
+                $query->where('age', '>=', 80);
+            }
+        }
+
+        $sort = $request->query('sort', 'name_asc');
+        $query = $this->applySort($query, $sort);
         $archivedCitizens = $query->paginate(10)->appends($request->query());
         return view('senior-citizens.archive', compact('archivedCitizens'));
     }
@@ -153,7 +219,7 @@ class SeniorCitizenController extends Controller
             'contact_number' => 'nullable|string|max:20',
             'date_of_birth' => 'required|date|before:today',
             'place_of_birth' => 'nullable|string|max:255',
-            'sex' => 'required|in:Male,Female,Other',
+            'sex' => 'required|in:Male,Female',
             'civil_status' => 'nullable|in:Single,Married,Widowed,Divorced,Separated,Other',
             'citizenship' => 'nullable|string|max:50',
             'religion' => 'nullable|string|max:100',
@@ -213,30 +279,38 @@ class SeniorCitizenController extends Controller
         if ($validated['middlename']) {
             $fullname .= ' ' . $validated['middlename'];
         }
-        if ($validated['extension_name']) {
+        if (!empty($validated['extension_name'])) {
             $fullname .= ' ' . $validated['extension_name'];
         }
         $seniorCitizen->fullname = trim($fullname);
 
         $seniorCitizen->save();
 
-        // Store family members
-        if ($request->has('family_members')) {
-            foreach ($request->family_members as $member) {
-                if (!empty($member['name'])) {
-                    FamilyMember::create([
-                        'senior_citizen_id' => $seniorCitizen->id,
-                        'name' => $member['name'],
-                        'relationship' => $member['relationship'] ?? null,
-                        'age' => $member['age'] ?? null,
-                        'civil_status' => $member['civil_status'] ?? null,
-                        'occupation' => $member['occupation'] ?? null,
-                        'monthly_income' => $member['monthly_income'] ?? 0,
-                        'address' => $member['address'] ?? null,
-                    ]);
-                }
+        // Store family members (handle JSON format)
+        $familyMembers = [];
+        
+        if ($request->has('family_members_json') && !empty($request->family_members_json)) {
+            $familyMembers = json_decode($request->family_members_json, true) ?? [];
+        } elseif ($request->has('family_members')) {
+            $familyMembers = $request->family_members ?? [];
+        }
+        
+        foreach ($familyMembers as $member) {
+            if (!empty($member['name'])) {
+                FamilyMember::create([
+                    'senior_citizen_id' => $seniorCitizen->id,
+                    'name' => $member['name'],
+                    'relationship' => $member['relationship'] ?? null,
+                    'age' => $member['age'] ?? null,
+                    'civil_status' => $member['civil_status'] ?? null,
+                    'occupation' => $member['occupation'] ?? null,
+                    'monthly_income' => $member['monthly_income'] ?? 0,
+                    'address' => $member['address'] ?? null,
+                ]);
             }
         }
+
+        app(\App\Services\CacheService::class)->invalidateTag('dashboard');
 
         return redirect()->route('senior-citizens.index')
                         ->with('success', 'Senior citizen added successfully!');
@@ -278,7 +352,7 @@ class SeniorCitizenController extends Controller
             'contact_number' => 'nullable|string|max:20',
             'date_of_birth' => 'required|date|before:today',
             'place_of_birth' => 'nullable|string|max:255',
-            'sex' => 'required|in:Male,Female,Other',
+            'sex' => 'required|in:Male,Female',
             'civil_status' => 'nullable|in:Single,Married,Widowed,Divorced,Separated,Other',
             'citizenship' => 'nullable|string|max:50',
             'religion' => 'nullable|string|max:100',
@@ -314,6 +388,11 @@ class SeniorCitizenController extends Controller
             'waitlist' => 'boolean',
             'social_pension' => 'boolean',
             'remarks' => 'nullable|in:' . $remarksList,
+
+            // Death Information (for deceased records)
+            'date_of_death' => 'nullable|date|before_or_equal:today',
+            'cause_of_death' => 'nullable|string|max:500',
+            'death_certificate_number' => 'nullable|string|max:100',
 
             // Family Members
             'family_members' => 'nullable|array',
@@ -367,16 +446,53 @@ class SeniorCitizenController extends Controller
             }
         }
 
+        app(\App\Services\CacheService::class)->invalidateTag('dashboard');
+
         return redirect()->route('senior-citizens.show', $seniorCitizen)
                         ->with('success', 'Senior citizen updated successfully!');
     }
 
     /**
-     * Archive the specified senior citizen (soft delete).
+     * Mark a senior citizen as deceased (with death details for SPISC).
+     * This is specific to social pension recipients.
      */
-    public function destroy(SeniorCitizen $seniorCitizen)
+    public function markDeceased(Request $request, SeniorCitizen $seniorCitizen)
+    {
+        // Only allow marking as deceased if they have social pension
+        if (!$seniorCitizen->social_pension) {
+            return redirect()->route('senior-citizens.index')
+                            ->with('error', 'Only social pension recipients can be marked as deceased through this process.');
+        }
+
+        $validated = $request->validate([
+            'date_of_death' => 'required|date|before_or_equal:today',
+            'cause_of_death' => 'required|string|max:255',
+            'death_certificate_registration_number' => 'required|string|max:100',
+        ]);
+
+        // Record the death information and set remarks to Deceased
+        $seniorCitizen->update([
+            'date_of_death' => $validated['date_of_death'],
+            'cause_of_death' => $validated['cause_of_death'],
+            'death_certificate_number' => $validated['death_certificate_registration_number'],
+            'remarks' => 'Deceased',
+        ]);
+
+        app(\App\Services\CacheService::class)->invalidateTag('dashboard');
+
+        return redirect()->route('senior-citizens.index')
+                        ->with('success', "Deceased information recorded for {$seniorCitizen->firstname} {$seniorCitizen->lastname}. Updated in SPISC with quarterly pension restriction.");
+    }
+
+    /**
+     * Archive the specified senior citizen (soft delete).
+     * No longer requires death information - that's handled by markDeceased for SPISC.
+     */
+    public function destroy(Request $request, SeniorCitizen $seniorCitizen)
     {
         $seniorCitizen->delete();
+
+        app(\App\Services\CacheService::class)->invalidateTag('dashboard');
 
         return redirect()->route('senior-citizens.index')
                         ->with('success', 'Senior citizen archived successfully! View archived records in the Archive section.');
@@ -402,6 +518,19 @@ class SeniorCitizenController extends Controller
     {
         $auditLogs = $seniorCitizen->auditLogs();
         return view('senior-citizens.audit-history', compact('seniorCitizen', 'auditLogs'));
+    }
+
+    /**
+     * Apply sort to senior citizens query.
+     */
+    private function applySort($query, string $sort)
+    {
+        $dir = str_ends_with($sort, '_desc') ? 'desc' : 'asc';
+        return match (explode('_', $sort)[0] ?? 'name') {
+            'age' => $query->orderBy('age', $dir),
+            'barangay' => $query->orderBy('barangay', $dir)->orderBy('lastname', 'asc')->orderBy('firstname', 'asc'),
+            default => $query->orderBy('lastname', $dir)->orderBy('firstname', $dir),
+        };
     }
 }
 
