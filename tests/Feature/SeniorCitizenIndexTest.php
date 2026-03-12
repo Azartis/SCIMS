@@ -161,6 +161,35 @@ it('archive list shows numeric age without yrs or mos', function () {
     expect($senior->age)->toBeGreaterThan(0);
 });
 
+it('persists optional email address on create and update', function () {
+    $user = User::factory()->create();
+
+    // prepare minimal data for a senior citizen, including email
+    $data = SeniorCitizen::factory()->make([
+        'email' => 'test@gmail.com',
+        // ensure required fields are present
+        'lastname' => 'Doe',
+        'firstname' => 'John',
+        'osca_id' => 'OSCA123',
+        'address' => 'Somewhere',
+        'barangay' => '\App\Constants\Barangay::list()[0]',
+        'date_of_birth' => '1950-01-01',
+        'sex' => 'Male',
+    ])->toArray();
+
+    // store record
+    $response = $this->actingAs($user)->post(route('senior-citizens.store'), $data);
+    $response->assertRedirect(route('senior-citizens.index'));
+    $this->assertDatabaseHas('senior_citizens', ['email' => 'test@gmail.com']);
+
+    $senior = SeniorCitizen::first();
+
+    // update without changing email, it should remain
+    $response = $this->actingAs($user)->put(route('senior-citizens.update', $senior), array_merge($data, ['lastname' => 'Doe2']));
+    $response->assertRedirect(route('senior-citizens.show', $senior));
+    expect($senior->refresh()->email)->toBe('test@gmail.com');
+});
+
 it('saves death info when archiving a senior citizen', function () {
     $user = User::factory()->create();
 

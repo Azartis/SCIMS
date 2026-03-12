@@ -49,6 +49,15 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+        if ($user && ! $user->isActive()) {
+            Auth::logout();
+            $status = $user->status ?: 'inactive';
+            throw ValidationException::withMessages([
+                'email' => "Your account is {$status}. Please contact an administrator.",
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

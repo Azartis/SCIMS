@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'status',
     ];
 
     /**
@@ -34,7 +35,30 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+    /**
+     * Determine if user is active.
+     */
+    public function isActive(): bool
+    {
+        // treat null (legacy rows) as active so they are not locked out
+        return $this->status === 'active' || is_null($this->status);
+    }
 
+    /**
+     * Determine if user is inactive or blocked.
+     */
+    public function isInactive(): bool
+    {
+        return in_array($this->status, ['inactive', 'blocked']);
+    }
+
+    /**
+     * Scope to only active users.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
     /**
      * Get the attributes that should be cast.
      *

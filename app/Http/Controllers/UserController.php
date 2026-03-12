@@ -30,6 +30,11 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $users = $query->paginate(10)->appends($request->query());
         return view('users.index', compact('users'));
     }
@@ -55,7 +60,13 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,staff',
+            'status' => 'nullable|in:active,inactive,blocked',
         ]);
+
+        // default to active when creating
+        if (empty($validated['status'])) {
+            $validated['status'] = 'active';
+        }
 
         try {
             $validated['password'] = bcrypt($validated['password']);
@@ -96,6 +107,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,staff',
             'password' => 'nullable|string|min:8|confirmed',
+            'status' => 'required|in:active,inactive,blocked',
         ]);
 
         if ($request->filled('password')) {
@@ -104,11 +116,17 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        $oldStatus = $user->status;
+        $user->update($validated);
+
+        // If status changed and user has active sessions, notify them
+        if ($oldStatus !== $user->status) {
+            $this->notifyStatusChange($user);
+        }
+
         // Store the old role before updating
         $oldRole = $user->role;
         $newRole = $validated['role'];
-
-        $user->update($validated);
 
         // If role was changed to admin, redirect to admin dashboard
         if ($oldRole !== 'admin' && $newRole === 'admin') {
@@ -140,6 +158,59 @@ class UserController extends Controller
     }
 
     /**
+     * Update only the status of a user (activate/deactivate/block).
+     */
+    public function updateStatus(Request $request, User $user)
+    {
+        $this->authorize('isAdmin');
+
+        // ensure database schema has the status column
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'status')) {
+            // migration likely hasn't been run
+            return redirect()->route('users.index')
+                            ->with('error', 'Unable to update user status: database column does not exist. Please run the pending migrations.');
+        }
+
+        $data = $request->validate([
+            'status' => 'required|in:active,inactive,blocked',
+        ]);
+
+        $oldStatus = $user->status;
+        $user->status = $data['status'];
+        $user->save();
+
+        if ($oldStatus !== $user->status) {
+            $this->notifyStatusChange($user);
+        }
+
+        return redirect()->route('users.index')
+                        ->with('success', 'Status for "' . $user->name . '" updated to ' . ucfirst($user->status) . '.');
+    }
+
+    /**
+     * Notify user of their status change if they have active sessions.
+     */
+    protected function notifyStatusChange(User $user)
+    {
+        // if the status column doesn't exist we can't meaningfully notify
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'status')) {
+            return;
+        }
+
+        // check sessions table for active sessions belonging to this user
+        $sessions = \DB::table('sessions')->where('user_id', $user->id)->count();
+        if ($sessions > 0) {
+            // send notification to any active session owner
+            $user->notify(new \App\Notifications\AccountStatusChanged($user->status));
+
+            // if the account is no longer active, remove sessions to force logout
+            if (! $user->isActive()) {
+                \DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+        }
+    }
+
+    /**
      * Export users to CSV
      */
     public function export()
@@ -157,13 +228,14 @@ class UserController extends Controller
 
         // Create CSV content
         $csvData = [];
-        $csvData[] = ['Name', 'Email', 'Role', 'Created At'];
+        $csvData[] = ['Name', 'Email', 'Role', 'Status', 'Created At'];
 
         foreach ($users as $user) {
             $csvData[] = [
                 $user->name,
                 $user->email,
                 ucfirst($user->role),
+                ucfirst($user->status),
                 $user->created_at->format('Y-m-d H:i:s'),
             ];
         }

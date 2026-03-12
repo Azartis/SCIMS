@@ -60,6 +60,16 @@
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>
 
+                        <div>
+                            <x-input-label for="status" :value="__('Status')" />
+                            <select id="status" name="status" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm @error('status') is-invalid @enderror">
+                                <option value="active" {{ old('status','active') === 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                                <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+                                <option value="blocked" {{ old('status') === 'blocked' ? 'selected' : '' }}>{{ __('Blocked') }}</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+                        </div>
+
                         <div class="flex justify-end gap-2">
                             <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-md font-medium text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                                 {{ __('Cancel') }}

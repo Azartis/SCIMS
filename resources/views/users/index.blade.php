@@ -12,17 +12,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-200 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
-            @if (session('error'))
-                <div class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <!-- Search and Filter Bar -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
@@ -45,6 +35,16 @@
                                 <option value="">All Roles</option>
                                 <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="staff" {{ request('role') === 'staff' ? 'selected' : '' }}>Staff</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <select name="status" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm">
+                                <option value="">All Statuses</option>
+                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="blocked" {{ request('status') === 'blocked' ? 'selected' : '' }}>Blocked</option>
                             </select>
                         </div>
 
@@ -73,6 +73,7 @@
                                     <th class="px-6 py-3 font-semibold">{{ __('Name') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Email') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Role') }}</th>
+                                    <th class="px-6 py-3 font-semibold">{{ __('Status') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Created') }}</th>
                                     <th class="px-6 py-3 font-semibold">{{ __('Actions') }}</th>
                                 </tr>
@@ -87,8 +88,14 @@
                                                 {{ ucfirst($user->role) }}
                                             </span>
                                         </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                                {{ $user->status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ($user->status === 'inactive' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200') }}">
+                                                {{ ucfirst($user->status) }}
+                                            </span>
+                                        </td>
                                         <td class="px-6 py-4">{{ $user->created_at->format('M d, Y') }}</td>
-                                        <td class="px-6 py-4 flex gap-2">
+                                        <td class="px-6 py-4 flex gap-2 items-center">
                                             <a href="{{ route('users.edit', $user) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline">{{ __('Edit') }}</a>
                                             @if ($user->id !== auth()->id())
                                                 <form action="{{ route('users.destroy', $user) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
@@ -96,6 +103,21 @@
                                                     @method('DELETE')
                                                     <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">{{ __('Delete') }}</button>
                                                 </form>
+                                                @if($user->status === 'active')
+                                                    <form action="{{ route('users.updateStatus', $user) }}" method="POST" style="display:inline;">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="inactive">
+                                                        <button type="submit" class="text-orange-600 dark:text-orange-400 hover:underline" onclick="return confirm('Deactivate this user?');">{{ __('Deactivate') }}</button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('users.updateStatus', $user) }}" method="POST" style="display:inline;">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="active">
+                                                        <button type="submit" class="text-green-600 dark:text-green-400 hover:underline" onclick="return confirm('Activate this user?');">{{ __('Activate') }}</button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>

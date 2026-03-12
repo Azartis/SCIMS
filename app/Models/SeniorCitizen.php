@@ -62,9 +62,9 @@ class SeniorCitizen extends Model
         'is_pensioner',
         'pension_type',
         'monthly_pension_amount',
+        'source_of_income',
         'other_income_source',
         'other_income_source_specify',
-        'source_of_income',
         'total_monthly_income',
         
         // Classification

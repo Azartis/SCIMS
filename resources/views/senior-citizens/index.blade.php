@@ -11,12 +11,7 @@
     </x-slot>
 
     <div class="space-y-6">
-        <!-- Success Message -->
-        @if (session('success'))
-            <x-alert type="success">
-                {{ session('success') }}
-            </x-alert>
-        @endif
+
 
         <!-- Search and Filter Panel -->
         <x-filter-bar

@@ -13,22 +13,29 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('welcome');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'check.status'])
     ->name('dashboard');
 
 // Global change history
 Route::get('/history', [\App\Http\Controllers\SeniorCitizenController::class, 'history'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'check.status'])
     ->name('history');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','check.status'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // log out other browser sessions
+    Route::post('/profile/other-sessions', [ProfileController::class, 'destroyOtherSessions'])
+        ->name('profile.other-sessions.destroy');
 
-    // Senior Citizens Routes
+    // Senior Citizens CRUD (main routes)
     Route::resource('senior-citizens', SeniorCitizenController::class);
-    Route::get('senior-citizens-archive', [SeniorCitizenController::class, 'archive'])->name('senior-citizens.archive');
+
+    // archive view for soft-deleted records
+    Route::get('senior-citizens/archive', [SeniorCitizenController::class, 'archive'])->name('senior-citizens.archive');
+
+    // additional helper endpoints
     Route::post('senior-citizens/{id}/restore', [SeniorCitizenController::class, 'restore'])->name('senior-citizens.restore');
     Route::get('senior-citizens/{id}/audit-history', [SeniorCitizenController::class, 'auditHistory'])->name('senior-citizens.audit-history');
     Route::post('senior-citizens/{seniorCitizen}/mark-deceased', [SeniorCitizenController::class, 'markDeceased'])->name('senior-citizens.mark-deceased');
@@ -74,6 +81,7 @@ Route::middleware('auth')->group(function () {
     // User Management Routes (Admin only) - includes CSV export
     Route::middleware('admin')->group(function () {
         Route::resource('users', UserController::class);
+        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
         Route::get('/users/export/csv', [UserController::class, 'export'])->name('users.export');
     });
 });

@@ -361,6 +361,7 @@ class SeniorCitizenController extends Controller
             // Health Condition Section
             'with_disability' => 'boolean',
             'type_of_disability' => 'nullable|string|max:255',
+            'cause_of_disability' => 'nullable|in:Congenital/Inborn,Acquired',
             'bedridden' => 'boolean',
             'with_assistive_device' => 'boolean',
             'type_of_assistive_device' => 'nullable|string|max:255',
@@ -373,7 +374,9 @@ class SeniorCitizenController extends Controller
             'is_pensioner' => 'boolean',
             'pension_type' => 'nullable|in:SSS,GSIS,PVAO,Private,Others',
             'monthly_pension_amount' => 'nullable|numeric|min:0',
+            'source_of_income' => 'nullable|string',
             'other_income_source' => 'nullable|string',
+            'other_income_source_specify' => 'nullable|string|max:255',
             'total_monthly_income' => 'nullable|numeric|min:0',
 
             // Classification
@@ -411,13 +414,13 @@ class SeniorCitizenController extends Controller
 
         // Generate fullname from name parts
         $fullname = $validated['lastname'];
-        if ($validated['firstname']) {
+        if ($validated['firstname'] ?? null) {
             $fullname .= ', ' . $validated['firstname'];
         }
-        if ($validated['middlename']) {
+        if ($validated['middlename'] ?? null) {
             $fullname .= ' ' . $validated['middlename'];
         }
-        if ($validated['extension_name']) {
+        if ($validated['extension_name'] ?? null) {
             $fullname .= ' ' . $validated['extension_name'];
         }
         $seniorCitizen->fullname = trim($fullname);

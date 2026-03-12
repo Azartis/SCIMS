@@ -20,11 +20,7 @@
         <!-- Tabs Navigation -->
         <div x-data="{ activeTab: 'basic' }" class="space-y-6">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-200 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
+
 
             <!-- HEADER SECTION -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">

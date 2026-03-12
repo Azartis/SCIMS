@@ -38,6 +38,30 @@
                 <!-- Main Content Area -->
                 <main class="flex-1 overflow-auto w-full">
                     <div class="w-full mx-auto px-2 sm:px-3 md:px-6 lg:px-8 py-3 sm:py-6 md:py-8">
+                        {{-- global flash messages (auto‑dismiss) --}}
+                        @if (session('success'))
+                            <div
+                                x-data="{ show: true }"
+                                x-show="show"
+                                x-init="setTimeout(() => show = false, 3000)"
+                                x-transition
+                                class="mb-4 p-4 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-200 rounded"
+                            >
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        @if (session('error'))
+                            <div
+                                x-data="{ show: true }"
+                                x-show="show"
+                                x-init="setTimeout(() => show = false, 5000)"
+                                x-transition
+                                class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded"
+                            >
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
                         @isset($slot)
                             {{ $slot }}
                         @else

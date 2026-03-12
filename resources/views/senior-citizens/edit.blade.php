@@ -396,5 +396,21 @@
             const sourceOfIncome = document.getElementById('source_of_income').value;
             document.getElementById('specify_income_container').style.display = sourceOfIncome === 'Others' ? 'block' : 'none';
         });
+
+        // Handle form submission and display helpful error message if token expires
+        document.getElementById('oscaForm').addEventListener('submit', function(e) {
+            // Check if form is valid before submitting
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Listen for network errors and show helpful message
+        window.addEventListener('error', function(event) {
+            if (event.message && event.message.includes('419')) {
+                console.error('Session expired. Please refresh and try again.');
+            }
+        });
     </script>
 </x-app-layout>
