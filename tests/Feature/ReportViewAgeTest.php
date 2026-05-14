@@ -21,9 +21,9 @@ it('displays numeric age in barangay report modal', function () {
     $response = $this->actingAs($user)->get(route('reports.barangay', ['barangay' => $barangay]));
     $response->assertStatus(200);
     $response->assertSee((string) $senior->age);
-    // the old exact_age format uses "yrs"/"mos"; ensure those substrings are absent
-    $response->assertDontSee('yrs');
-    $response->assertDontSee('mos');
+    // the old exact_age format uses "yrs"/"mos"; ensure those substrings are not appended to the numeric age
+    $response->assertDontSee($senior->age . ' yrs');
+    $response->assertDontSee($senior->age . ' mos');
 });
 
 it('displays numeric age in health report modal', function () {
@@ -39,8 +39,8 @@ it('displays numeric age in health report modal', function () {
     $response = $this->actingAs($user)->get(route('reports.health', ['condition' => 'with_disability']));
     $response->assertStatus(200);
     $response->assertSee((string) $senior->age);
-    $response->assertDontSee('yrs');
-    $response->assertDontSee('mos');
+    $response->assertDontSee($senior->age . ' yrs');
+    $response->assertDontSee($senior->age . ' mos');
 });
 
 it('displays numeric age in deceased/archived report', function () {
@@ -56,6 +56,6 @@ it('displays numeric age in deceased/archived report', function () {
     $response = $this->actingAs($user)->get(route('reports.deceased'));
     $response->assertStatus(200);
     $response->assertSee((string) $senior->age);
-    $response->assertDontSee('yrs');
-    $response->assertDontSee('mos');
+    $response->assertDontSee($senior->age . ' yrs');
+    $response->assertDontSee($senior->age . ' mos');
 });

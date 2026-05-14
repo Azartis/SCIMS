@@ -8,7 +8,7 @@ class Remarks
     {
         return [
             'Deceased',
-            'Waitlist',
+            'On Waitlist',
             'Recently Moved',
             'Hospitalized',
             'Cannot Be Reached',

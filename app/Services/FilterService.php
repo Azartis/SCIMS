@@ -50,9 +50,30 @@ class FilterService
         ], $metadata);
 
         if ($this->request->filled($parameterName)) {
-            $search = $this->request->input($parameterName);
-            $this->activeFilters[$parameterName] = $search;
+            $search = trim((string) $this->request->input($parameterName));
 
+            // If the search term is a plain number and the underlying model supports age filtering,
+            // treat it as an exact age filter to avoid accidental substring matches (e.g. "71" matching
+            // OSCA IDs, contact numbers, etc.) that make age searching feel inaccurate.
+            if (
+                $parameterName === 'search'
+                && !$this->request->filled('age_exact')
+                && !$this->request->filled('age_range')
+                && $search !== ''
+                && is_numeric($search)
+                && method_exists($this->query->getModel(), 'scopeApplyAgeFilter')
+            ) {
+                $n = (int) $search;
+                if ($n >= 60 && $n <= 120) {
+                    $this->request->query->set('age_exact', (string) $n);
+                    $this->request->query->remove('search');
+                    // Mark exact age as active; skip text search entirely.
+                    $this->activeFilters['age_exact'] = (string) $n;
+                    return $this;
+                }
+            }
+
+            $this->activeFilters[$parameterName] = $search;
             $this->query->where(function ($q) use ($searchFields, $search) {
                 foreach ($searchFields as $field) {
                     $q->orWhere($field, 'like', "%{$search}%");
@@ -205,6 +226,26 @@ class FilterService
             $callback($this->query, $value, $this->request);
         }
 
+        return $this;
+    }
+
+    /**
+     * Apply age filter (exact takes precedence over range). Uses SeniorCitizen::scopeApplyAgeFilter.
+     */
+    public function applyAgeFilter(): self
+    {
+        $this->filterMetadata['age_exact'] = ['label' => 'Exact Age', 'icon' => '🎂'];
+        $this->filterMetadata['age_range'] = ['label' => 'Age Range', 'icon' => '🎂'];
+
+        $params = $this->request->only(['age_exact', 'age_range']);
+        if ($this->request->filled('age_exact') || $this->request->filled('age_range')) {
+            $this->query->applyAgeFilter($params);
+            if ($this->request->filled('age_exact')) {
+                $this->activeFilters['age_exact'] = $this->request->input('age_exact');
+            } elseif ($this->request->filled('age_range')) {
+                $this->activeFilters['age_range'] = $this->request->input('age_range');
+            }
+        }
         return $this;
     }
 

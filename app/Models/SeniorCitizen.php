@@ -84,6 +84,7 @@ class SeniorCitizen extends Model
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'age' => 'integer',
         'sss' => 'boolean',
         'gsis' => 'boolean',
         'pvao' => 'boolean',
@@ -304,6 +305,62 @@ class SeniorCitizen extends Model
 
         // Allow all other attributes through normal path
         return parent::setAttribute($key, $value);
+    }
+
+    /**
+     * Apply age filter from request params (single source of truth for age filtering).
+     * Exact age takes precedence over range; range options: 60-69, 70-79, 80+.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  array{age_exact?: string|null, age_range?: string|null}  $params
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeApplyAgeFilter($query, array $params)
+    {
+        $exact = $params['age_exact'] ?? null;
+        $range = $params['age_range'] ?? null;
+
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $ageExpr = match ($driver) {
+            // MySQL / MariaDB (XAMPP typical)
+            'mysql' => 'TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE())',
+            // SQLite (tests)
+            'sqlite' => "CAST((julianday('now') - julianday(date_of_birth)) / 365.25 AS INTEGER)",
+            default => null,
+        };
+
+        if ($exact !== null && $exact !== '' && is_numeric($exact)) {
+            $age = (int) $exact;
+            if ($age >= 60 && $age <= 120) {
+                if ($ageExpr) {
+                    // Compute from date_of_birth for accuracy even if stored 'age' is stale/null.
+                    $query->whereNotNull('date_of_birth')->whereRaw("$ageExpr = ?", [$age]);
+                } else {
+                    $query->where('age', $age);
+                }
+                return $query;
+            }
+        }
+
+        if ($range !== null && $range !== '') {
+            if (preg_match('/^(\d+)-(\d+)$/', $range, $m)) {
+                $min = (int) $m[1];
+                $max = (int) $m[2];
+                if ($ageExpr) {
+                    $query->whereNotNull('date_of_birth')->whereRaw("$ageExpr BETWEEN ? AND ?", [$min, $max]);
+                } else {
+                    $query->whereBetween('age', [$min, $max]);
+                }
+            } elseif ($range === '80+') {
+                if ($ageExpr) {
+                    $query->whereNotNull('date_of_birth')->whereRaw("$ageExpr >= ?", [80]);
+                } else {
+                    $query->where('age', '>=', 80);
+                }
+            }
+        }
+
+        return $query;
     }
 
     /**

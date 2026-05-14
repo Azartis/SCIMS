@@ -91,7 +91,7 @@ class DashboardService extends BaseService
                 // Current period counts
                 $totalSeniors = SeniorCitizen::count();
                 $pensionRecipients = SeniorCitizen::where('social_pension', true)->count();
-                $onWaitlist = SeniorCitizen::where('remarks', 'On Waitlist')->count();
+                $onWaitlist = SeniorCitizen::where('waitlist', true)->count();
                 $withDisability = SeniorCitizen::where('with_disability', true)->count();
 
                 // Previous period counts (30 days ago) for trend calculation

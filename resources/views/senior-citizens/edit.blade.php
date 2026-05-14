@@ -235,23 +235,26 @@
                             <x-input-label for="philhealth_id" :value="__('PhilHealth ID')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
                             <x-text-input id="philhealth_id" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="philhealth_id" placeholder="Enter PhilHealth ID (optional)" :value="old('philhealth_id', $seniorCitizen->philhealth_id)" />
                         </div>
-                        <div class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
-                            <x-input-label for="source_of_income" :value="__('Source of Income')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
-                            <select id="source_of_income" name="source_of_income" class="block w-full text-xs border-gray-300 dark:border-gray-600 rounded-md">
+                        <div id="source_income_container" class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600" style="display: {{ old('is_pensioner', $seniorCitizen->is_pensioner) === 1 ? 'none' : 'block' }};">
+                            <x-input-label for="source_of_income" :value="__('Source of Income / Financial Support')" class="block text-gray-800 dark:text-gray-100 font-semibold text-xs mb-1" />
+                            <select id="source_of_income" name="source_of_income" class="block w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" {{ old('is_pensioner', $seniorCitizen->is_pensioner) === 1 ? 'disabled' : '' }}>
                                 <option value="">-- Select Source --</option>
-                                <option value="Employment/Salary" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Employment/Salary')>Employment/Salary</option>
+                                <option value="Employment/Salary" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Employment/Salary')>Wages / Salaries</option>
                                 <option value="Pension" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Pension')>Pension</option>
                                 <option value="Self-Employment" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Self-Employment')>Self-Employment</option>
-                                <option value="Remittance" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Remittance')>Remittance</option>
-                                <option value="Business" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Business')>Business</option>
-                                <option value="Government Assistance" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Government Assistance')>Government Assistance</option>
+                                <option value="Business" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Business')>Profits from entrepreneurial activities</option>
+                                <option value="Remittance" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Remittance')>Remittance (Friends & Neighbours)</option>
+                                <option value="Government Assistance" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Government Assistance')>Transfers from the government</option>
+                                <option value="Household family members/relatives" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Household family members/relatives')>Household family members/relatives</option>
+                                <option value="Domestic household family members/relatives" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Domestic household family members/relatives')>Domestic household family members/relatives</option>
+                                <option value="International family members/relatives" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='International family members/relatives')>International family members/relatives</option>
                                 <option value="Others" @selected(old('source_of_income', $seniorCitizen->source_of_income)==='Others')>Others</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Specify Other Income Source (shown when Others is selected) -->
-                    <div class="mb-2 p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700" id="specify_income_container" style="display: none;">
+                    <div class="mb-2 p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700" id="specify_income_container" style="display: {{ (old('is_pensioner', $seniorCitizen->is_pensioner) === 1) || (old('source_of_income', $seniorCitizen->source_of_income) !== 'Others') ? 'none' : 'block' }};">
                         <x-input-label for="other_income_source_specify" :value="__('Please Specify Other Income Source')" class="text-xs font-semibold text-gray-800 dark:text-gray-100" />
                         <x-text-input id="other_income_source_specify" class="block mt-1 w-full text-xs border-gray-300 dark:border-gray-600 rounded-md" type="text" name="other_income_source_specify" placeholder="e.g., Rental income, Savings interest, etc." :value="old('other_income_source_specify', $seniorCitizen->other_income_source_specify)" />
                     </div>
@@ -326,8 +329,21 @@
         // Pensioner radio buttons
         document.querySelectorAll('input[name="is_pensioner"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                document.getElementById('pension_type_container').style.display = this.value === '1' ? 'block' : 'none';
-                if (this.value === '0') {
+                const isPensioner = this.value === '1';
+
+                // Pension type is only relevant for pensioners
+                document.getElementById('pension_type_container').style.display = isPensioner ? 'block' : 'none';
+
+                // Source of income only applies when not a pensioner
+                document.getElementById('source_income_container').style.display = isPensioner ? 'none' : 'block';
+                const sourceSelect = document.getElementById('source_of_income');
+                sourceSelect.disabled = isPensioner;
+
+                if (isPensioner) {
+                    sourceSelect.value = '';
+                    document.getElementById('specify_income_container').style.display = 'none';
+                    document.getElementById('other_income_source_specify').value = '';
+                } else {
                     document.getElementById('pension_type').value = '';
                 }
             });
@@ -335,7 +351,8 @@
 
         // Source of Income select
         document.getElementById('source_of_income').addEventListener('change', function() {
-            document.getElementById('specify_income_container').style.display = this.value === 'Others' ? 'block' : 'none';
+            const pensionerYes = document.getElementById('pensioner_yes').checked;
+            document.getElementById('specify_income_container').style.display = (!pensionerYes && this.value === 'Others') ? 'block' : 'none';
             if (this.value !== 'Others') {
                 document.getElementById('other_income_source_specify').value = '';
             }
@@ -384,17 +401,24 @@
                 document.getElementById('cause_disability_container').style.display = disabilityCheckbox.checked ? 'block' : 'none';
             }
 
-            // Show pension type if pensioner is yes
+            // Show pension type and source of income based on pensioner selection
             const pensionerYes = document.getElementById('pensioner_yes').checked;
             document.getElementById('pension_type_container').style.display = pensionerYes ? 'block' : 'none';
+            document.getElementById('source_income_container').style.display = pensionerYes ? 'none' : 'block';
+
+            const sourceSelect = document.getElementById('source_of_income');
+            sourceSelect.disabled = pensionerYes;
+            if (pensionerYes) {
+                sourceSelect.value = '';
+            }
 
             // Handle assistive device visibility
             const hasDevice = document.querySelector('input[name="with_assistive_device"]:checked');
             document.getElementById('specify_device_container').style.display = (hasDevice && hasDevice.value === '1') ? 'block' : 'none';
 
             // Handle source of income visibility
-            const sourceOfIncome = document.getElementById('source_of_income').value;
-            document.getElementById('specify_income_container').style.display = sourceOfIncome === 'Others' ? 'block' : 'none';
+            const sourceOfIncome = sourceSelect.value;
+            document.getElementById('specify_income_container').style.display = (!pensionerYes && sourceOfIncome === 'Others') ? 'block' : 'none';
         });
 
         // Handle form submission and display helpful error message if token expires

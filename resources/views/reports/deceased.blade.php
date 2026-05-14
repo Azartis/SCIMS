@@ -14,38 +14,42 @@
                 </div>
             </div>
 
-            <!-- Filter and Sort Bar -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <form method="GET" action="{{ route('reports.deceased') }}" class="p-4 flex flex-wrap gap-2 items-center">
-                    <select name="barangay" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
+            <!-- Filter and Sort Bar (same UI as masterlist) -->
+            <x-filter-bar
+                :action="route('reports.deceased')"
+                :resetUrl="route('reports.deceased')"
+                :hasActiveFilters="request()->filled('search') || request()->filled('barangay') || request()->filled('sex') || request()->filled('age_range') || request()->filled('age_exact') || (request('sort') && request('sort') !== 'name_asc')"
+                :activeCount="(request()->filled('search') ? 1 : 0) + (request()->filled('barangay') ? 1 : 0) + (request()->filled('sex') ? 1 : 0) + (request()->filled('age_range') || request()->filled('age_exact') ? 1 : 0) + (request('sort') && request('sort') !== 'name_asc' ? 1 : 0)"
+            >
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Search') }}</label>
+                    <input type="text" name="search" placeholder="{{ __('Name or OSCA ID') }}" value="{{ request('search') }}"
+                        class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Barangay') }}</label>
+                    <select name="barangay" class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500">
                         <option value="">{{ __('All Barangays') }}</option>
                         @foreach($barangays as $b)
-                            <option value="{{ $b }}" {{ request('barangay') === $b ? 'selected' : '' }}>
-                                {{ $b }}
-                            </option>
+                            <option value="{{ $b }}" {{ request('barangay') === $b ? 'selected' : '' }}>{{ $b }}</option>
                         @endforeach
                     </select>
-
-                    <select name="sex" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                        <option value="">{{ __('Sex') }}</option>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Sex') }}</label>
+                    <select name="sex" class="w-full px-2.5 py-1.5 text-xs md:text-sm rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500">
+                        <option value="">{{ __('All') }}</option>
                         <option value="Male" {{ request('sex') === 'Male' ? 'selected' : '' }}>{{ __('Male') }}</option>
                         <option value="Female" {{ request('sex') === 'Female' ? 'selected' : '' }}>{{ __('Female') }}</option>
-                        </select>
-
-                    <div>
-                        <x-age-range-filter name="age_range" :value="request('age_range')" />
-                    </div>
-
-                    <select name="sort" class="px-2 py-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm">
-                        <option value="name_asc" {{ in_array(request('sort'), ['name_asc', 'asc', null]) ? 'selected' : '' }}>{{ __('A - Z') }}</option>
-                        <option value="name_desc" {{ request('sort') === 'name_desc' || request('sort') === 'desc' ? 'selected' : '' }}>{{ __('Z - A') }}</option>
                     </select>
-
-                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs">{{ __('Filter') }}</button>
-
-                    <a href="{{ route('reports.deceased') }}" class="px-3 py-1 bg-gray-500 text-white rounded-md text-xs">{{ __('Reset') }}</a>
-                </form>
-            </div>
+                </div>
+                <div>
+                    <x-age-range-filter name="age_range" :value="request('age_range')" />
+                </div>
+                <div>
+                    <x-sort-dropdown />
+                </div>
+            </x-filter-bar>
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <h3 class="text-lg font-semibold mb-4">{{ __('List of Archived/Deceased Records') }}</h3>

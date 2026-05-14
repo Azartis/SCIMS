@@ -52,44 +52,33 @@
                 <button 
                     @click="open = !open" 
                     @click.away="open = false"
-                    class="group flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 border border-slate-200 dark:border-slate-700 cursor-pointer"
-                    title="Click to open user menu"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
                 >
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 shadow-sm group-hover:shadow-lg group-hover:scale-105 transition-all">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 shadow-sm">
                         {{ auth()->user()->name[0] }}
                     </div>
-                    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-all" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
                 </button>
 
                 <!-- User Dropdown Menu -->
                 <div 
                     x-show="open" 
                     x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="transform opacity-0 translate-y-1 scale-95"
-                    x-transition:enter-end="transform opacity-100 translate-y-0 scale-100"
+                    x-transition:enter-start="transform opacity-0 translate-y-1"
+                    x-transition:enter-end="transform opacity-100 translate-y-0"
                     x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="transform opacity-100 translate-y-0 scale-100"
-                    x-transition:leave-end="transform opacity-0 translate-y-1 scale-95"
-                    class="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 z-[9999] overflow-hidden"
+                    x-transition:leave-start="transform opacity-100 translate-y-0"
+                    x-transition:leave-end="transform opacity-0 translate-y-1"
+                    class="absolute right-0 mt-2 w-48 rounded-2xl shadow-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 z-[9999] overflow-hidden"
                 >
                     <!-- User Info -->
-                    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-blue-50/30 dark:from-blue-900/30 dark:to-blue-900/10">
-                        <p class="font-semibold text-slate-900 dark:text-slate-50 text-sm truncate">{{ auth()->user()->name }}</p>
+                    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-50/50 dark:from-slate-800/50 dark:to-slate-800/30">
+                        <p class="font-medium text-slate-900 dark:text-slate-50 text-sm truncate">{{ auth()->user()->name }}</p>
                         <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ auth()->user()->email }}</p>
-                        @if(auth()->user()->role)
-                            <p class="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1 capitalize">{{ auth()->user()->role }}</p>
-                        @endif
                     </div>
 
                     <!-- Menu Items -->
                     <div class="py-2">
-                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200">
                             Profile Settings
                         </a>
                     </div>
@@ -98,10 +87,7 @@
                     <div class="border-t border-slate-200 dark:border-slate-700 py-2">
                         <form method="POST" action="{{ route('logout') }}" class="block">
                             @csrf
-                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
+                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 font-medium">
                                 Sign Out
                             </button>
                         </form>
@@ -136,15 +122,19 @@
             <a href="{{ route('spisc.index') }}" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors truncate">
                 💰 Social Pension
             </a>
-            @if(auth()->user()->role === 'admin')
+            @can('isAdmin', auth()->user())
                 <hr class="my-3 border-slate-300 dark:border-slate-600">
-                <a href="{{ route('users.index') }}" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors truncate">
-                    👥 User Management
-                </a>
-                <a href="{{ route('audit-logs.index') }}" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors truncate">
-                    📋 Audit Logs
-                </a>
-            @endif
+                @can('viewUsers', App\Models\User::class)
+                    <a href="{{ route('users.index') }}" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors truncate">
+                        👥 User Management
+                    </a>
+                @endcan
+                @can('viewAuditLogs', auth()->user())
+                    <a href="{{ route('audit-logs.index') }}" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors truncate">
+                        📋 Audit Logs
+                    </a>
+                @endcan
+            @endcan
         @endauth
     </nav>
 </header>

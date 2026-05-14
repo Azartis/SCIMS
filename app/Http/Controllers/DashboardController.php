@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\SeniorCitizen;
 use App\Models\AuditLog;
+use App\Services\ReportService;
 use App\Services\DashboardService;
 use Illuminate\View\View;
 
@@ -13,7 +14,10 @@ class DashboardController extends Controller
     /**
      * DashboardService - handles all dashboard data aggregation
      */
-    public function __construct(private DashboardService $dashboardService)
+    public function __construct(
+        private DashboardService $dashboardService,
+        private ReportService $reportService
+    )
     {
     }
 
@@ -52,6 +56,24 @@ class DashboardController extends Controller
 
         return view('dashboard', [
             'dashboardData' => $dashboardData,
+        ]);
+    }
+
+    /**
+     * Dedicated analytics dashboard with charts (Admin & Staff).
+     */
+    public function analytics(): View
+    {
+        $healthReport = $this->reportService->getHealthReport();
+        $barangayReport = $this->reportService->getBarangayReport();
+        $deceasedReport = $this->reportService->getDeceasedReport();
+        $disabilityReport = $this->reportService->getDisabilityReport();
+
+        return view('dashboard-analytics', [
+            'healthReport' => $healthReport,
+            'barangayReport' => $barangayReport,
+            'deceasedReport' => $deceasedReport,
+            'disabilityReport' => $disabilityReport,
         ]);
     }
 }

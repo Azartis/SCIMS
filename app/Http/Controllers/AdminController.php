@@ -6,18 +6,22 @@ use App\Models\User;
 use App\Models\SeniorCitizen;
 use App\Models\AuditLog;
 use App\Services\DashboardService;
+use App\Services\AuthorizationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminController extends Controller
 {
     /**
-     * AdminController - Admin Dashboard and Management
+     * AdminController - Admin-specific actions
      * 
-     * Handles admin-specific dashboard with system metrics and user management
+     * Redundant user management routes have been consolidated into UserController.
+     * This controller now focuses on admin-specific dashboard and operations.
      */
-    public function __construct(private DashboardService $dashboardService)
-    {
+    public function __construct(
+        private DashboardService $dashboardService,
+        private AuthorizationService $authService
+    ) {
     }
 
     /**
@@ -30,26 +34,17 @@ class AdminController extends Controller
     }
 
     /**
-     * Display user management page (same as users.index but marked as admin)
+     * DEPRECATED: Use UserController::index instead
+     * 
+     * This route is kept for backward compatibility
+     * but redirects to the centralized UserController
      */
-    public function userManagement(Request $request): View
+    public function userManagement(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $query = User::query();
-
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-        }
-
-        // Filter by role
-        if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
-
-        $users = $query->latest()->paginate(15)->appends($request->query());
-
-        return view('admin.user-management', compact('users'));
+        // Redirect to the consolidated user management route
+        return redirect()->route('users.index')->with(
+            'info',
+            'User management has been consolidated to a single interface.'
+        );
     }
 }

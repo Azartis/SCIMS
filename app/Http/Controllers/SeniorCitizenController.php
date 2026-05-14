@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SeniorCitizen;
 use App\Models\FamilyMember;
 use App\Models\AuditLog;
+use App\Models\SavedFilter;
 use App\Services\FilterService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\DashboardController;
@@ -19,6 +20,9 @@ class SeniorCitizenController extends Controller
      */
     public function index(Request $request)
     {
+        $interpretedAgeSearch = false;
+        $interpretedAgeValue = null;
+
         // If user types a plain number in the general search box (e.g. "71"),
         // interpret it as an exact age unless an explicit age filter is already chosen.
         if (
@@ -29,10 +33,13 @@ class SeniorCitizenController extends Controller
         ) {
             $n = (int) trim((string) $request->input('search'));
             if ($n >= 60 && $n <= 120) {
-                $request->merge([
-                    'age_exact' => (string) $n,
-                    'search' => null,
-                ]);
+                // IMPORTANT: for GET requests, the "input source" is the query string,
+                // so we must update the query params (not just merge into the request body).
+                $request->query->set('age_exact', (string) $n);
+                $request->query->remove('search');
+
+                $interpretedAgeSearch = true;
+                $interpretedAgeValue = $n;
             }
         }
 
@@ -107,29 +114,26 @@ class SeniorCitizenController extends Controller
                         break;
                 }
             }, ['label' => 'Classification', 'icon' => '📋'])
-            ->custom('age_exact', function($q, $value) {
-                if (is_numeric($value) && (int)$value >= 60) {
-                    $q->where('age', (int)$value);
-                }
-            }, ['label' => 'Exact Age', 'icon' => '🎂'])
-            ->custom('age_range', function($q, $value, $req) {
-                if ($req->filled('age_exact')) return; // exact age takes precedence
-                $value = trim($value ?? '');
-                if ($value === '') return;
-                if (preg_match('/^(\d+)-(\d+)$/', $value, $m)) {
-                    $q->whereBetween('age', [(int)$m[1], (int)$m[2]]);
-                } elseif ($value === '80+') {
-                    $q->where('age', '>=', 80);
-                }
-            }, ['label' => 'Age Range', 'icon' => '🎂']);
+            ->applyAgeFilter();
 
         // Get the filtered query
         $query = $filterService->getQuery();
 
         // Apply sorting
-        $sort = $request->query('sort', 'name_asc');
+        // If user is filtering by an age range and didn't choose a sort,
+        // default to youngest → oldest for a more intuitive result order.
+        $defaultSort = $request->filled('age_range') && !$request->filled('sort')
+            ? 'age_asc'
+            : 'name_asc';
+        $sort = $request->query('sort', $defaultSort);
         $query = $this->applySort($query, $sort);
         $seniorCitizens = $query->paginate(15)->appends($request->query());
+
+        // Saved filter presets for this context
+        $savedFilters = SavedFilter::forUser($request->user()->id)
+            ->forContext('senior-citizens.index')
+            ->orderBy('name')
+            ->get();
 
         // Pass filter information to view
         return view('senior-citizens.index', [
@@ -139,6 +143,9 @@ class SeniorCitizenController extends Controller
             'activeFilters' => $filterService->getActiveFilters(),
             'activeFilterCount' => $filterService->getActiveFilterCount(),
             'barangays' => \App\Constants\Barangay::list(),
+            'savedFilters' => $savedFilters,
+            'interpretedAgeSearch' => $interpretedAgeSearch,
+            'interpretedAgeValue' => $interpretedAgeValue,
         ]);
     }
 
@@ -148,6 +155,21 @@ class SeniorCitizenController extends Controller
     public function archive(Request $request)
     {
         $query = SeniorCitizen::onlyTrashed();
+
+        // If user types a plain number in search (e.g. "71"), interpret it as exact age
+        // to keep archive behavior consistent with the masterlist.
+        if (
+            $request->filled('search')
+            && !$request->filled('age_exact')
+            && !$request->filled('age_range')
+            && is_numeric(trim((string) $request->input('search')))
+        ) {
+            $n = (int) trim((string) $request->input('search'));
+            if ($n >= 60 && $n <= 120) {
+                $request->query->set('age_exact', (string) $n);
+                $request->query->remove('search');
+            }
+        }
 
         // Search functionality
         if ($request->filled('search')) {
@@ -161,19 +183,13 @@ class SeniorCitizenController extends Controller
             });
         }
 
-        // Age filter: exact takes precedence over range
-        if ($request->filled('age_exact') && is_numeric($request->age_exact)) {
-            $query->where('age', (int)$request->age_exact);
-        } elseif ($request->filled('age_range') && $request->age_range !== '') {
-            $ageRange = $request->age_range;
-            if (preg_match('/^(\d+)-(\d+)$/', $ageRange, $matches)) {
-                $query->whereBetween('age', [(int)$matches[1], (int)$matches[2]]);
-            } elseif ($ageRange === '80+') {
-                $query->where('age', '>=', 80);
-            }
-        }
+        // Age filter (single source of truth: SeniorCitizen::scopeApplyAgeFilter)
+        $query->applyAgeFilter($request->only(['age_exact', 'age_range']));
 
-        $sort = $request->query('sort', 'name_asc');
+        $defaultSort = $request->filled('age_range') && !$request->filled('sort')
+            ? 'age_asc'
+            : 'name_asc';
+        $sort = $request->query('sort', $defaultSort);
         $query = $this->applySort($query, $sort);
         $archivedCitizens = $query->paginate(10)->appends($request->query());
         return view('senior-citizens.archive', compact('archivedCitizens'));

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SeniorCitizen;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
 
 /**
  * Report Service
@@ -241,10 +242,10 @@ class ReportService extends BaseService
             'gender_report',
             CacheService::TTL['medium'],
             function () {
-                $data = SeniorCitizen::selectRaw('gender, count(*) as count')
+                $data = SeniorCitizen::selectRaw('sex, count(*) as count')
                     ->whereNull('deleted_at')
-                    ->groupBy('gender')
-                    ->pluck('count', 'gender')
+                    ->groupBy('sex')
+                    ->pluck('count', 'sex')
                     ->toArray();
 
                 return [
@@ -276,22 +277,22 @@ class ReportService extends BaseService
     }
 
     /**
-     * Export report data to CSV format array
+     * Export report data to array rows suitable for CSV / Excel / PDF
      * 
      * @param string $reportType
      * @param array $filters
      * @return Collection
      */
-    public function exportToCSV(string $reportType = 'summary', array $filters = []): Collection
+    public function exportToRows(string $reportType = 'summary', array $filters = []): Collection
     {
         try {
             return match($reportType) {
-                'health' => $this->exportHealthToCSV(),
-                'barangay' => $this->exportBarangayToCSV(),
-                'classification' => $this->exportClassificationToCSV(),
-                'pension' => $this->exportPensionToCSV(),
-                'deceased' => $this->exportDeceasedToCSV(),
-                'disability' => $this->exportDisabilityToCSV(),
+                'health' => $this->exportHealthRows(),
+                'barangay' => $this->exportBarangayRows(),
+                'classification' => $this->exportClassificationRows(),
+                'pension' => $this->exportPensionRows(),
+                'deceased' => $this->exportDeceasedRows(),
+                'disability' => $this->exportDisabilityRows(),
                 default => collect(),
             };
         } catch (\Exception $e) {
@@ -300,7 +301,7 @@ class ReportService extends BaseService
         }
     }
 
-    private function exportHealthToCSV(): Collection
+    private function exportHealthRows(): Collection
     {
         $report = $this->getHealthReport();
         return collect($report['data'])->map(fn($count, $group) => [
@@ -310,7 +311,7 @@ class ReportService extends BaseService
         ]);
     }
 
-    private function exportBarangayToCSV(): Collection
+    private function exportBarangayRows(): Collection
     {
         $report = $this->getBarangayReport();
         return collect($report['data'])->map(fn($count, $barangay) => [
@@ -320,7 +321,7 @@ class ReportService extends BaseService
         ]);
     }
 
-    private function exportClassificationToCSV(): Collection
+    private function exportClassificationRows(): Collection
     {
         $report = $this->getClassificationReport();
         return collect($report['data'])->map(fn($count, $classification) => [
@@ -330,7 +331,7 @@ class ReportService extends BaseService
         ]);
     }
 
-    private function exportPensionToCSV(): Collection
+    private function exportPensionRows(): Collection
     {
         $report = $this->getPensionReport();
         return collect([
@@ -341,7 +342,7 @@ class ReportService extends BaseService
         ]);
     }
 
-    private function exportDeceasedToCSV(): Collection
+    private function exportDeceasedRows(): Collection
     {
         $report = $this->getDeceasedReport();
         return collect($report['data'])->map(fn($item) => [
@@ -350,7 +351,7 @@ class ReportService extends BaseService
         ])->prepend(['category' => 'Month-Month', 'count' => 'Deaths']);
     }
 
-    private function exportDisabilityToCSV(): Collection
+    private function exportDisabilityRows(): Collection
     {
         $report = $this->getDisabilityReport();
         $rows = collect([

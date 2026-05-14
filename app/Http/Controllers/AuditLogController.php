@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class AuditLogController extends Controller
 {
@@ -12,7 +13,7 @@ class AuditLogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = AuditLog::query();
+        $query = AuditLog::with('user');
 
         // Filter by event type
         if ($request->filled('event') && $request->event !== '') {
@@ -29,9 +30,24 @@ class AuditLogController extends Controller
             $query->where('auditable_type', 'App\\Models\\' . $request->model);
         }
 
-        // Search by IP address
+        // Date range
+        if ($request->filled('date_from')) {
+            $from = Carbon::parse($request->date_from)->startOfDay();
+            $query->where('created_at', '>=', $from);
+        }
+        if ($request->filled('date_to')) {
+            $to = Carbon::parse($request->date_to)->endOfDay();
+            $query->where('created_at', '<=', $to);
+        }
+
+        // Free-text search: IP, URL, user agent
         if ($request->filled('search')) {
-            $query->where('ip_address', 'like', "%{$request->search}%");
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('ip_address', 'like', "%{$search}%")
+                  ->orWhere('url', 'like', "%{$search}%")
+                  ->orWhere('user_agent', 'like', "%{$search}%");
+            });
         }
 
         $auditLogs = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());

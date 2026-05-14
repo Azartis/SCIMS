@@ -7,6 +7,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SavedFilterController;
+use App\Http\Controllers\SeniorCitizenImportController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +17,9 @@ Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('welcom
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'check.status'])
     ->name('dashboard');
+Route::get('/analytics', [DashboardController::class, 'analytics'])
+    ->middleware(['auth', 'verified', 'check.status'])
+    ->name('dashboard.analytics');
 
 // Global change history
 Route::get('/history', [\App\Http\Controllers\SeniorCitizenController::class, 'history'])
@@ -44,11 +49,14 @@ Route::middleware(['auth','check.status'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/reports/statistics', [ReportController::class, 'statistics'])->name('reports.statistics');
+    Route::get('/reports/generator', [ReportController::class, 'generator'])->name('reports.generator');
+    Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
     // Report detail routes
     Route::get('/reports/health', [ReportController::class, 'health'])->name('reports.health');
     Route::get('/reports/health/export', [ReportController::class, 'exportHealth'])->name('reports.health.export');
     Route::get('/reports/barangay', [ReportController::class, 'barangay'])->name('reports.barangay');
     Route::get('/reports/barangay/export', [ReportController::class, 'exportBarangay'])->name('reports.barangay.export');
+    Route::get('/geo/dulag-barangays.geojson', [ReportController::class, 'dulagBarangayGeojson'])->name('geo.dulag-barangays');
     Route::get('/reports/deceased', [ReportController::class, 'deceased'])->name('reports.deceased');
     Route::get('/reports/deceased/{id}', [ReportController::class, 'deceasedShow'])->name('reports.deceased.show');
 
@@ -69,6 +77,10 @@ Route::middleware(['auth','check.status'])->group(function () {
     Route::post('/age-milestones/{age}/distribute', [\App\Http\Controllers\AgeMilestoneController::class, 'distribute'])->name('age-milestones.distribute');
     Route::post('/age-milestones/distribution/{distribution}/claim', [\App\Http\Controllers\AgeMilestoneController::class, 'claimDistribution'])->name('age-milestones.distribution.claim');
 
+    // Saved filter presets (Admin & Staff)
+    Route::post('/saved-filters', [SavedFilterController::class, 'store'])->name('saved-filters.store');
+    Route::delete('/saved-filters/{savedFilter}', [SavedFilterController::class, 'destroy'])->name('saved-filters.destroy');
+
     // Audit Logs Routes (Admin only)
     Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show'])->middleware('admin');
 
@@ -83,6 +95,10 @@ Route::middleware(['auth','check.status'])->group(function () {
         Route::resource('users', UserController::class);
         Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
         Route::get('/users/export/csv', [UserController::class, 'export'])->name('users.export');
+
+        // CSV/Excel import for senior citizens
+        Route::get('/admin/imports/seniors', [SeniorCitizenImportController::class, 'create'])->name('imports.seniors.create');
+        Route::post('/admin/imports/seniors', [SeniorCitizenImportController::class, 'store'])->name('imports.seniors.store');
     });
 });
 

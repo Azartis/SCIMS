@@ -9,13 +9,25 @@ uses(RefreshDatabase::class);
 
 it('shows deceased status filter on spisc and returns correct results', function () {
     // setup three recipients: alive, dead, and also dead but not pensioner
-    $alive = SeniorCitizen::factory()->create(['social_pension' => true]);
+    // Use deterministic last names so assertions don't falsely match substring collisions.
+    $alive = SeniorCitizen::factory()->create([
+        'social_pension' => true,
+        'lastname' => 'AliveTest',
+    ]);
     PensionDistribution::factory()->create(['senior_citizen_id' => $alive->id]);
 
-    $dead = SeniorCitizen::factory()->create(['social_pension' => true, 'date_of_death' => now()->subDays(10)->format('Y-m-d')]);
+    $dead = SeniorCitizen::factory()->create([
+        'social_pension' => true,
+        'lastname' => 'DeadTest',
+        'date_of_death' => now()->subDays(10)->format('Y-m-d'),
+    ]);
     PensionDistribution::factory()->create(['senior_citizen_id' => $dead->id]);
 
-    $other = SeniorCitizen::factory()->create(['social_pension' => false, 'date_of_death' => now()->subDays(5)->format('Y-m-d')]);
+    $other = SeniorCitizen::factory()->create([
+        'social_pension' => false,
+        'lastname' => 'OtherTest',
+        'date_of_death' => now()->subDays(5)->format('Y-m-d'),
+    ]);
 
     $user = User::factory()->create();
 

@@ -11,7 +11,7 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <!-- Filters -->
                     <form method="GET" action="{{ route('audit-logs.index') }}" class="mb-6">
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                             <!-- Event Filter -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2">{{ __('Event') }}</label>
@@ -46,17 +46,32 @@
                                 </select>
                             </div>
 
-                            <!-- IP Address Search -->
+                            <!-- Search -->
                             <div>
-                                <label class="block text-sm font-semibold mb-2">{{ __('IP Address') }}</label>
-                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search IP..." class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm" />
+                                <label class="block text-sm font-semibold mb-2">{{ __('Search') }}</label>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="IP / URL / User Agent" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm" />
+                            </div>
+
+                            <!-- Date From -->
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">{{ __('Date From') }}</label>
+                                <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm" />
+                            </div>
+
+                            <!-- Date To -->
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">{{ __('Date To') }}</label>
+                                <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm" />
                             </div>
 
                             <!-- Filter Button -->
-                            <div class="flex items-end">
+                            <div class="flex items-end gap-2">
                                 <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 dark:bg-blue-700 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-100 uppercase tracking-widest hover:bg-blue-700">
                                     {{ __('Filter') }}
                                 </button>
+                                <a href="{{ route('audit-logs.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-gray-200 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-gray-800 dark:text-gray-100 uppercase tracking-widest hover:bg-gray-300 dark:hover:bg-gray-600">
+                                    {{ __('Reset') }}
+                                </a>
                             </div>
                         </div>
                     </form>

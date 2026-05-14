@@ -3,18 +3,104 @@
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Barangay Reports') }}
         </h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ __('Click a barangay on the map to view senior citizen records') }}</p>
     </x-slot>
 
-    <div class="py-12">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/osmtogeojson@3.0.0/osmtogeojson.js"></script>
+    <style>.barangay-marker { background: transparent !important; border: none !important; }</style>
+
+    <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                @foreach($barangays as $b)
-                    <a href="{{ route('reports.barangay', ['barangay' => $b]) }}" class="block bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 hover:border-blue-500 border border-transparent">
-                        <h3 class="text-lg font-semibold mb-2">{{ $b }}</h3>
-                        <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ $counts[$b] ?? 0 }}</p>
-                    </a>
-                @endforeach
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
+                <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ __('Map of Dulag, Leyte') }}</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Click a barangay area to view senior citizens in that barangay') }}</p>
+                </div>
+                <div id="dulag-map" class="w-full min-h-[400px]" style="height: 520px; background: #e2e8f0;"></div>
+                <div id="map-status" class="px-4 py-2 text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                    {{ __('Loading Dulag boundary…') }}
+                </div>
+                <div class="p-3 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
+                    @foreach($barangays as $b)
+                        <a href="{{ route('reports.barangay', ['barangay' => $b]) }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 transition">
+                            <span class="font-medium">{{ $b }}</span>
+                            <span class="text-slate-500 dark:text-slate-400">({{ $counts[$b] ?? 0 }})</span>
+                        </a>
+                    @endforeach
+                </div>
             </div>
+
+            @push('scripts')
+            <script>
+            (function() {
+                const counts = @json($counts ?? []);
+                const baseUrl = @json(route('reports.barangay'));
+                const statusEl = document.getElementById('map-status');
+                const map = L.map('dulag-map', { zoomControl: true }).setView([10.9525, 125.0321], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+                // Load boundaries from our own backend (same-origin), cached server-side.
+                const geoUrl = @json(route('geo.dulag-barangays'));
+
+                fetch(geoUrl)
+                .then(r => r.json())
+                .then(osm => {
+                    const geo = osmtogeojson(osm);
+                    if (!geo || !geo.features || geo.features.length === 0) {
+                        throw new Error('No features after conversion');
+                    }
+
+                    const barangayFeatures = geo.features.filter(f =>
+                        f.properties && (f.properties.tags?.admin_level === '10' || f.properties.tags?.place === 'barangay')
+                    );
+                    const municipalityFeatures = geo.features.filter(f =>
+                        f.properties && f.properties.tags?.admin_level === '8' && f.properties.tags?.name === 'Dulag'
+                    );
+
+                    // Draw municipality boundary (Dulag only)
+                    let dulagBounds = null;
+                    if (municipalityFeatures.length > 0) {
+                        const dulagLayer = L.geoJSON(municipalityFeatures, {
+                            style: { color: '#1d4ed8', weight: 2, fill: false, opacity: 0.9 }
+                        }).addTo(map);
+                        dulagBounds = dulagLayer.getBounds();
+                        map.fitBounds(dulagBounds.pad(0.05));
+                        map.setMaxBounds(dulagBounds.pad(0.25));
+                    }
+
+                    // Draw barangay polygons (clickable)
+                    const brgyLayer = L.geoJSON(barangayFeatures, {
+                        style: { color: '#2563eb', weight: 1, fillColor: '#60a5fa', fillOpacity: 0.18 },
+                        onEachFeature: (feature, layer) => {
+                            const name = feature?.properties?.tags?.name;
+                            if (!name) return;
+                            const count = counts[name] ?? 0;
+                            layer.bindTooltip(`${name} (${count})`, { sticky: true });
+                            layer.on('click', () => {
+                                window.location.href = baseUrl + '?barangay=' + encodeURIComponent(name);
+                            });
+                        }
+                    }).addTo(map);
+
+                    if (!dulagBounds && brgyLayer.getBounds && brgyLayer.getBounds().isValid()) {
+                        map.fitBounds(brgyLayer.getBounds().pad(0.05));
+                    }
+
+                    if (statusEl) {
+                        statusEl.textContent = 'Loaded Dulag boundary and barangays. Click a barangay area to view records.';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (statusEl) {
+                        statusEl.textContent = 'Map loaded, but barangay boundaries could not be fetched. Use the barangay buttons below.';
+                    }
+                });
+            })();
+            </script>
+            @endpush
 
             @if(isset($selected) && $seniorCitizens)
                 <x-modal name="barangayModal" :show="isset($selected)" focusable>

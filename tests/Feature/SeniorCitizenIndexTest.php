@@ -122,6 +122,43 @@ it('treats numeric search as exact age when no age filter is selected', function
     $response->assertDontSee($other->osca_id);
 });
 
+it('filters by exact age when age_exact is provided', function () {
+    $user = User::factory()->create();
+
+    now()->setTestNow('2026-01-01');
+    $age71 = SeniorCitizen::factory()->create(['date_of_birth' => '1955-01-01']);
+    $age72 = SeniorCitizen::factory()->create(['date_of_birth' => '1954-01-01']);
+    $age71->calculateAge();
+    $age71->save();
+    $age72->calculateAge();
+    $age72->save();
+
+    $response = $this->actingAs($user)->get(route('senior-citizens.index', ['age_exact' => '71']));
+    $response->assertStatus(200);
+    $response->assertSee($age71->osca_id);
+    $response->assertDontSee($age72->osca_id);
+});
+
+it('applies exact age over range when both are sent', function () {
+    $user = User::factory()->create();
+
+    now()->setTestNow('2026-01-01');
+    $age71 = SeniorCitizen::factory()->create(['date_of_birth' => '1955-01-01']);
+    $age75 = SeniorCitizen::factory()->create(['date_of_birth' => '1951-01-01']);
+    $age71->calculateAge();
+    $age71->save();
+    $age75->calculateAge();
+    $age75->save();
+
+    $response = $this->actingAs($user)->get(route('senior-citizens.index', [
+        'age_exact' => '71',
+        'age_range' => '70-79',
+    ]));
+    $response->assertStatus(200);
+    $response->assertSee($age71->osca_id);
+    $response->assertDontSee($age75->osca_id);
+});
+
 it('shows age value on the show page', function () {
     $user = User::factory()->create();
 

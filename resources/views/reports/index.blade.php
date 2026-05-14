@@ -200,6 +200,19 @@
                         </div>
                     </a>
 
+                    <a href="{{ route('reports.generator') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-emerald-400 dark:hover:border-emerald-600 transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-emerald-600 transition">Report Generator</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Create printable or spreadsheet-ready reports (CSV, Excel, PDF) from summary analytics.</p>
+                            </div>
+                            <span class="text-3xl">📑</span>
+                        </div>
+                        <div class="mt-4 inline-flex items-center text-emerald-600 dark:text-emerald-400 font-semibold text-sm group-hover:gap-2 gap-1 transition">
+                            Open Generator →
+                        </div>
+                    </a>
+
                     <a href="{{ route('reports.barangay') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-green-400 dark:hover:border-green-600 transition">
                         <div class="flex items-start justify-between">
                             <div>

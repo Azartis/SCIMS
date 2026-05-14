@@ -19,6 +19,9 @@
             :resetUrl="route('senior-citizens.index')"
             :hasActiveFilters="request()->filled('search') || request()->filled('sex') || request()->filled('barangay') || request()->filled('social_pension') || request()->filled('pension_type') || request()->filled('age_range') || request()->filled('age_exact')"
             :activeCount="(optional($filterService)->getActiveFilterCount() ?? 0) + (request('sort') && request('sort') !== 'name_asc' ? 1 : 0)"
+            context="senior-citizens.index"
+            :savedFilters="$savedFilters"
+            :currentFilters="request()->query()"
         >
             <div class="sm:col-span-2 md:col-span-2">
                 <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Search</label>
@@ -68,6 +71,16 @@
         </x-filter-bar>
 
         <!-- Results Summary -->
+        @if(($interpretedAgeSearch ?? false) && !request()->filled('search') && request()->filled('age_exact'))
+            <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 md:p-4">
+                <p class="text-xs md:text-sm text-emerald-800 dark:text-emerald-200">
+                    Interpreted your numeric search as an <span class="font-semibold">exact age</span> filter:
+                    <span class="font-semibold">age = {{ $interpretedAgeValue }}</span>.
+                    Showing <span class="font-semibold">{{ $seniorCitizens->total() }}</span> matching record(s).
+                </p>
+            </div>
+        @endif
+
         @if(request()->filled('search') || request()->filled('sex') || request()->filled('barangay') || request()->filled('social_pension') || request()->filled('pension_type'))
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 md:p-4">
                 <p class="text-xs md:text-sm text-blue-800 dark:text-blue-200">

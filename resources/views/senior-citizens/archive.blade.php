@@ -29,7 +29,7 @@
                     <x-age-range-filter name="age_range" :value="request('age_range')" />
                 </div>
                 <div>
-                    <x-sort-dropdown :options="['name_asc' => 'Name A → Z', 'name_desc' => 'Name Z → A']" />
+                    <x-sort-dropdown />
                 </div>
             </x-filter-bar>
 

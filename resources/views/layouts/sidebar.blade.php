@@ -86,6 +86,21 @@
             <span>Reports</span>
         </a>
 
+        <!-- Analytics -->
+        <a 
+            href="{{ route('dashboard.analytics') }}" 
+            @class([
+                'flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 group',
+                'bg-gradient-to-r from-sky-50 to-sky-50/50 dark:from-sky-900/30 dark:to-sky-900/10 text-sky-700 dark:text-sky-400 shadow-sm border border-sky-200 dark:border-sky-800' => request()->routeIs('dashboard.analytics'),
+                'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200' => !request()->routeIs('dashboard.analytics'),
+            ])
+        >
+            <svg class="w-5 h-5 mr-3 transition-transform group-hover:scale-110 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19h16M5 16l4-8 4 6 3-4 3 6" />
+            </svg>
+            <span>Analytics</span>
+        </a>
+
         <!-- History -->
         <a 
             href="{{ route('history') }}" 

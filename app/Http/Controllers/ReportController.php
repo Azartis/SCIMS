@@ -6,9 +6,57 @@ use App\Models\SeniorCitizen;
 use Illuminate\Http\Request;
 use App\Constants\Barangay;
 use Illuminate\Support\Str;
+use App\Services\ReportService;
+use App\Exports\ReportArrayExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class ReportController extends Controller
 {
+    private function applyListSort($query, Request $request): void
+    {
+        $sort = (string) $request->query('sort', 'name_asc');
+
+        // Sort dropdown always submits a value; treat name_asc as "no explicit sort"
+        // so age-range filtered results naturally show younger → older.
+        if ($request->filled('age_range') && ($sort === '' || $sort === 'name_asc')) {
+            $sort = 'age_asc';
+        }
+
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $ageExpr = match ($driver) {
+            'mysql' => 'TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE())',
+            'sqlite' => "CAST((julianday('now') - julianday(date_of_birth)) / 365.25 AS INTEGER)",
+            default => null,
+        };
+
+        if ($sort === 'age_asc' || $sort === 'age_desc') {
+            $dir = $sort === 'age_desc' ? 'desc' : 'asc';
+            if ($ageExpr) {
+                $query->orderByRaw("$ageExpr $dir");
+            } else {
+                $query->orderBy('age', $dir);
+            }
+            $query->orderBy('lastname', 'asc')->orderBy('firstname', 'asc');
+            return;
+        }
+
+        if ($sort === 'barangay_asc' || $sort === 'barangay_desc') {
+            $dir = $sort === 'barangay_desc' ? 'desc' : 'asc';
+            $query->orderBy('barangay', $dir)->orderBy('lastname', 'asc')->orderBy('firstname', 'asc');
+            return;
+        }
+
+        $dir = $sort === 'name_desc' ? 'desc' : 'asc';
+        $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+    }
+
+    public function __construct(
+        private readonly ReportService $reportService
+    ) {
+    }
     /**
      * Display reports page.
      */
@@ -37,7 +85,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Generate CSV export.
+     * Generate CSV export for basic senior list (legacy).
      */
     public function export(Request $request)
     {
@@ -120,6 +168,82 @@ class ReportController extends Controller
     }
 
     /**
+     * Show unified report generator form.
+     */
+    public function generator()
+    {
+        return view('reports.generator');
+    }
+
+    /**
+     * Generate a report in CSV, Excel, or PDF format.
+     */
+    public function generate(Request $request)
+    {
+        $data = $request->validate([
+            'report_type' => ['required', 'in:health,barangay,classification,pension,deceased,disability'],
+            'format' => ['required', 'in:csv,excel,pdf'],
+        ]);
+
+        $type = $data['report_type'];
+        $format = $data['format'];
+
+        $rows = $this->reportService->exportToRows($type)->values();
+
+        if ($rows->isEmpty()) {
+            return back()->with('error', 'No data available for selected report.');
+        }
+
+        $first = $rows->first();
+        $headings = array_keys($first);
+        $filenameBase = 'report_' . $type . '_' . now()->format('Y-m-d_His');
+
+        if ($format === 'csv') {
+            $filename = $filenameBase . '.csv';
+            return response()->stream(
+                function () use ($rows, $headings) {
+                    $handle = fopen('php://output', 'w');
+                    fputcsv($handle, $headings);
+                    foreach ($rows as $row) {
+                        fputcsv($handle, array_values($row));
+                    }
+                    fclose($handle);
+                },
+                200,
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => "attachment; filename=\"$filename\"",
+                ]
+            );
+        }
+
+        if ($format === 'excel') {
+            $export = new ReportArrayExport($rows, $headings);
+            return Excel::download($export, $filenameBase . '.xlsx');
+        }
+
+        // PDF
+        $titleMap = [
+            'health' => 'Age Distribution Report',
+            'barangay' => 'Barangay Distribution Report',
+            'classification' => 'Classification Distribution Report',
+            'pension' => 'Pension Status Report',
+            'deceased' => 'Deceased Seniors Report',
+            'disability' => 'Disability Distribution Report',
+        ];
+        $title = $titleMap[$type] ?? 'Report';
+
+        $pdf = Pdf::loadView('reports.export-pdf', [
+            'title' => $title,
+            'headings' => $headings,
+            'rows' => $rows,
+            'generatedAt' => now(),
+        ]);
+
+        return $pdf->download($filenameBase . '.pdf');
+    }
+
+    /**
      * Display detailed statistics.
      */
     public function statistics()
@@ -169,6 +293,20 @@ class ReportController extends Controller
         if ($condition && array_key_exists($condition, $conditions)) {
             $query = SeniorCitizen::where($condition, true);
 
+            // Numeric search = exact age (consistent with masterlist)
+            if (
+                $request->filled('search')
+                && !$request->filled('age_exact')
+                && !$request->filled('age_range')
+                && is_numeric(trim((string) $request->input('search')))
+            ) {
+                $n = (int) trim((string) $request->input('search'));
+                if ($n >= 60 && $n <= 120) {
+                    $request->query->set('age_exact', (string) $n);
+                    $request->query->remove('search');
+                }
+            }
+
             // Filter by barangay
             if ($request->filled('barangay')) {
                 $query->where('barangay', $request->barangay);
@@ -207,10 +345,7 @@ class ReportController extends Controller
                 });
             }
 
-            // Sort by name
-            $sort = $request->query('sort', 'name_asc');
-            $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
-            $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+            $this->applyListSort($query, $request);
 
             $seniorCitizens = $query->paginate(10)->appends($request->query());
         }
@@ -234,6 +369,20 @@ class ReportController extends Controller
         if ($selected && in_array($selected, $barangays)) {
             $query = SeniorCitizen::where('barangay', $selected);
 
+            // Numeric search = exact age (consistent with masterlist)
+            if (
+                $request->filled('search')
+                && !$request->filled('age_exact')
+                && !$request->filled('age_range')
+                && is_numeric(trim((string) $request->input('search')))
+            ) {
+                $n = (int) trim((string) $request->input('search'));
+                if ($n >= 60 && $n <= 120) {
+                    $request->query->set('age_exact', (string) $n);
+                    $request->query->remove('search');
+                }
+            }
+
             // Filter by sex
             if ($request->filled('sex')) {
                 $query->where('sex', $request->sex);
@@ -253,14 +402,56 @@ class ReportController extends Controller
                 });
             }
 
-            $sort = $request->query('sort', 'name_asc');
-            $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
-            $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+            $this->applyListSort($query, $request);
 
             $seniorCitizens = $query->paginate(10)->appends($request->query());
         }
 
         return view('reports.barangay', compact('barangays', 'counts', 'selected', 'seniorCitizens'));
+    }
+
+    /**
+     * Serve Dulag + barangay boundaries as GeoJSON (cached).
+     * This avoids client-side CORS/network blocks by fetching server-side.
+     */
+    public function dulagBarangayGeojson()
+    {
+        $cacheKey = 'geojson.dulag_barangays.v1';
+        // Note: despite the method name, we return Overpass JSON and convert client-side.
+        $osmJson = Cache::remember($cacheKey, 60 * 60 * 24, function () {
+            $query = <<<'Q'
+[out:json][timeout:25];
+rel["boundary"="administrative"]["admin_level"="8"]["wikidata"="Q212988"]->.dulag;
+(.dulag; map_to_area;)->.dulagArea;
+(
+  rel["boundary"="administrative"]["admin_level"="10"](area.dulagArea);
+  .dulag;
+);
+out body geom;
+Q;
+
+            $endpoints = [
+                'https://overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter',
+                'https://overpass.nchc.org.tw/api/interpreter',
+            ];
+
+            $lastStatus = null;
+            foreach ($endpoints as $url) {
+                $resp = Http::asForm()
+                    ->timeout(75)
+                    ->post($url, ['data' => $query]);
+
+                if ($resp->successful()) {
+                    return $resp->json();
+                }
+                $lastStatus = $resp->status();
+            }
+
+            throw new \RuntimeException('Overpass error: ' . ($lastStatus ?? 'unknown'));
+        });
+
+        return response()->json($osmJson);
     }
 
     /**
@@ -513,6 +704,32 @@ class ReportController extends Controller
     {
         $query = SeniorCitizen::onlyTrashed();
 
+        // Numeric search = exact age (consistent with masterlist/archive)
+        if (
+            $request->filled('search')
+            && !$request->filled('age_exact')
+            && !$request->filled('age_range')
+            && is_numeric(trim((string) $request->input('search')))
+        ) {
+            $n = (int) trim((string) $request->input('search'));
+            if ($n >= 60 && $n <= 120) {
+                $request->query->set('age_exact', (string) $n);
+                $request->query->remove('search');
+            }
+        }
+
+        // Filter by search (name or OSCA ID)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                  ->orWhere('middlename', 'like', "%{$search}%")
+                  ->orWhere('lastname', 'like', "%{$search}%")
+                  ->orWhere('fullname', 'like', "%{$search}%")
+                  ->orWhere('osca_id', 'like', "%{$search}%");
+            });
+        }
+
         // Filter by barangay
         if ($request->filled('barangay') && $request->barangay !== '') {
             $query->where('barangay', $request->barangay);
@@ -525,9 +742,7 @@ class ReportController extends Controller
 
         $this->applyAgeFilter($query, $request);
 
-        $sort = $request->query('sort', 'name_asc');
-        $dir = in_array($sort, ['name_desc', 'desc']) ? 'desc' : 'asc';
-        $query->orderBy('lastname', $dir)->orderBy('firstname', $dir);
+        $this->applyListSort($query, $request);
 
         $deceasedCount = SeniorCitizen::onlyTrashed()->count();
         $seniorCitizens = $query->paginate(10)->appends($request->query());
@@ -547,15 +762,6 @@ class ReportController extends Controller
 
     private function applyAgeFilter($query, Request $request): void
     {
-        if ($request->filled('age_exact') && is_numeric($request->age_exact)) {
-            $query->where('age', (int)$request->age_exact);
-        } elseif ($request->filled('age_range') && $request->age_range !== '') {
-            $val = $request->age_range;
-            if (preg_match('/^(\d+)-(\d+)$/', $val, $m)) {
-                $query->whereRaw('age >= ? AND age <= ?', [(int)$m[1], (int)$m[2]]);
-            } elseif ($val === '80+') {
-                $query->where('age', '>=', 80);
-            }
-        }
+        $query->applyAgeFilter($request->only(['age_exact', 'age_range']));
     }
 }

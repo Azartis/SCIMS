@@ -10,11 +10,15 @@
     'resetUrl' => request()->url(),
     'hasActiveFilters' => false,
     'activeCount' => 0,
+    // optional advanced settings
+    'context' => null, // route or logical key, e.g. "senior-citizens.index"
+    'savedFilters' => collect(), // collection of SavedFilter models
+    'currentFilters' => [], // array of current query parameters
 ])
 
-<div x-data="{ open: {{ $hasActiveFilters ? 'true' : 'false' }} }" class="mb-4">
+<div x-data="{ open: {{ $hasActiveFilters ? 'true' : 'false' }}, saving: false }" class="mb-4">
     <!-- Filter Toggle Header -->
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between mb-2 gap-2">
         <button
             type="button"
             @click="open = !open"
@@ -30,9 +34,51 @@
                 </span>
             @endif
         </button>
-        <a href="{{ $resetUrl }}" class="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
-            ↻ Reset
-        </a>
+        <div class="flex items-center gap-2">
+            @if($context && $savedFilters->isNotEmpty())
+                <div class="hidden md:flex items-center gap-1">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Presets:</span>
+                    <select
+                        class="text-[11px] md:text-xs rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1"
+                        onchange="if(this.value){ window.location.href=this.value; }"
+                    >
+                        <option value="">{{ __('Choose…') }}</option>
+                        @foreach($savedFilters as $preset)
+                            <option value="{{ route($preset->context, $preset->filters ?? []) }}">
+                                {{ $preset->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+
+            @if($context)
+                <form method="POST" action="{{ route('saved-filters.store') }}" class="hidden md:flex items-center gap-1"
+                      x-show="!saving" x-transition>
+                    @csrf
+                    <input type="hidden" name="context" value="{{ $context }}">
+                    @foreach($currentFilters as $key => $val)
+                        @if(!in_array($key, ['page']))
+                            <input type="hidden" name="filters[{{ $key }}]" value="{{ $val }}">
+                        @endif
+                    @endforeach
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="{{ __('Save as preset…') }}"
+                        class="text-[11px] rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1"
+                    >
+                    <button type="submit"
+                        class="inline-flex items-center px-2 py-1 text-[11px] rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600">
+                        💾
+                    </button>
+                </form>
+            @endif
+
+            <a href="{{ $resetUrl }}" class="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
+                ↻ Reset
+            </a>
+        </div>
     </div>
 
     <!-- Filter Panel -->

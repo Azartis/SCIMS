@@ -54,12 +54,14 @@
                         {{ __('Reports') }}
                     </x-nav-link>
 
-                    @if(auth()->user()->role === 'admin')
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" class="flex items-center gap-2">
-                            <span>⚙️</span>
-                            {{ __('Users') }}
-                        </x-nav-link>
-                    @endif
+                    @can('isAdmin', auth()->user())
+                        @can('viewUsers', App\Models\User::class)
+                            <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" class="flex items-center gap-2">
+                                <span>⚙️</span>
+                                {{ __('Users') }}
+                            </x-nav-link>
+                        @endcan
+                    @endcan
                 </div>
             </div>
 
@@ -129,11 +131,13 @@
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                 📊 {{ __('Reports') }}
             </x-responsive-nav-link>
-            @if(auth()->user()->role === 'admin')
-                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                    ⚙️ {{ __('Users') }}
-                </x-responsive-nav-link>
-            @endif
+            @can('isAdmin', auth()->user())
+                @can('viewUsers', App\Models\User::class)
+                    <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        ⚙️ {{ __('Users') }}
+                    </x-responsive-nav-link>
+                @endcan
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

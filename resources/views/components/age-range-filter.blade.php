@@ -11,7 +11,17 @@ $exactValue = old('age_exact', request('age_exact'));
 $exactValue = $exactValue && is_numeric($exactValue) ? $exactValue : '';
 @endphp
 
-<div x-data="{ }">
+<div x-data="{
+    bumpSortToAgeAsc() {
+        const form = this.$el.closest('form');
+        if (!form) return;
+        const sort = form.querySelector('select[name=\"sort\"]');
+        if (!sort) return;
+        if (!sort.value || sort.value === 'name_asc') {
+            sort.value = 'age_asc';
+        }
+    }
+}">
     <label for="{{ $name }}" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Age</label>
 
     <div class="grid grid-cols-2 gap-1.5">
@@ -20,13 +30,18 @@ $exactValue = $exactValue && is_numeric($exactValue) ? $exactValue : '';
                 name="{{ $name }}"
                 id="{{ $name }}"
                 x-ref="range"
-                @change="if ($event.target.value) { $refs.exact.value = ''; }"
+                @change="
+                    if ($event.target.value) {
+                        $refs.exact.value = '';
+                        bumpSortToAgeAsc();
+                    }
+                "
                 class="w-full px-2 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 title="Age range"
             >
                 <option value="">Range</option>
                 @foreach($ranges as $r)
-                    <option value="{{ $r }}" {{ $current === $r ? 'selected' : '' }}>{{ $r }} yrs</option>
+                    <option value="{{ $r }}" {{ $current === $r ? 'selected' : '' }}>{{ $r }}</option>
                 @endforeach
             </select>
         </div>

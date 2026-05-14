@@ -171,6 +171,20 @@
 
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-4">
                         <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Source of Income / Financial Support</p>
+                            <p class="text-gray-900 dark:text-gray-100 font-medium">
+                                @if($seniorCitizen->is_pensioner)
+                                    Pensioner
+                                @else
+                                    {{ $seniorCitizen->source_of_income ?? 'N/A' }}
+                                @endif
+                            </p>
+                            @if(!$seniorCitizen->is_pensioner && $seniorCitizen->source_of_income === 'Others')
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Details: {{ $seniorCitizen->other_income_source_specify ?? 'Not specified' }}</p>
+                            @endif
+                        </div>
+
+                        <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Pension Type</p>
                             <p class="text-gray-900 dark:text-gray-100 font-medium">{{ $seniorCitizen->pension_type ? ucfirst(str_replace('_', ' ', $seniorCitizen->pension_type)) : 'N/A' }}</p>
                         </div>

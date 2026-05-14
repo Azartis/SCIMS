@@ -122,7 +122,7 @@ it('barangay modal filters by exact age', function () {
     $user = User::factory()->create();
     $response = $this->actingAs($user)->get(route('reports.barangay', [
         'barangay' => $barangay,
-        'age_range' => (string)$sen->age,
+        'age_exact' => (string) $sen->age,
     ]));
 
     $response->assertStatus(200);
@@ -209,7 +209,7 @@ it('health modal filters by exact age', function () {
     $user = User::factory()->create();
     $response = $this->actingAs($user)->get(route('reports.health', [
         'condition' => 'with_disability',
-        'age_range' => (string)$sen->age,
+        'age_exact' => (string) $sen->age,
     ]));
 
     $response->assertStatus(200);
